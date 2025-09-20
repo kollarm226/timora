@@ -16,20 +16,34 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # Set up .NET Core SDK
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
 
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore Timora.sln
+
+      # Build the project
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      # Run unit tests
+      - name: Run tests
+        run: dotnet test Timora.Tests/Timora.Tests.csproj --no-build --configuration Release
 
-      - name: Upload artifact for deployment job
+      # Publish the project
+      - name: Publish API
+        run: dotnet publish Timora.Api/Timora.Api.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+
+      # Upload artifact for deployment
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
@@ -43,18 +57,21 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
+      # Download artifacts
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
       
+      # Login to Azure using service principal
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0DBCA519B9BB4E64854C7476E9FFC786 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_72695D37733641689CBE580B863B8F00 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5B9E6433C3B849B8ADAAD041018A1ACF }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
