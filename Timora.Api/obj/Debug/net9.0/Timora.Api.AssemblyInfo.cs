@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Timora.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fc3843f01fdd285a14eb8845b4875ee6535e0556")]
 [assembly: System.Reflection.AssemblyProductAttribute("Timora.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Timora.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
