@@ -1,1 +1,10 @@
 .github/copilot-instructions.md
+
+# JetBrains Rider / IntelliJ
+.idea/
+*.sln.iml
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
