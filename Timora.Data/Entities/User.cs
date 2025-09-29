@@ -9,7 +9,8 @@ namespace Timora.Data.Entities
         public string UserName { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
 
-        public string Role { get; set; } = "Employee"; // Default role is "Employee"
+        public UserRole Role { get; set; } = UserRole.Employee;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<HolidayRequest> HolidayRequests { get; set; } =
             new List<HolidayRequest>();
