@@ -8,9 +8,9 @@ namespace Timora.Data.Entities
 
         public DateTime EndDate { get; set; }
         public string Reason { get; set; } = null!;
-        public string Status { get; set; } = "Pending"; // Default status is "Pending"
+        public HolidayRequestStatus Status { get; set; } = HolidayRequestStatus.Pending;
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
-        public DateTime ResolvedAt { get; set; }
+        public DateTime? ResolvedAt { get; set; }
 
         public User User { get; set; } = null!;
     }
