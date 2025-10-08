@@ -10,12 +10,12 @@ namespace Timora.Data.Entities
         /// Gets or sets the unique identifier for the holiday request.
         /// </summary>
         public int Id { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the ID of the user who submitted this holiday request.
         /// </summary>
         public int UserId { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the start date of the requested holiday period.
         /// </summary>
@@ -25,32 +25,32 @@ namespace Timora.Data.Entities
         /// Gets or sets the end date of the requested holiday period.
         /// </summary>
         public DateTime EndDate { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the reason provided for the holiday request.
         /// </summary>
         public string Reason { get; set; } = null!;
-        
+
         /// <summary>
         /// Gets or sets the current status of the holiday request. Defaults to Pending.
         /// </summary>
         public HolidayRequestStatus Status { get; set; } = HolidayRequestStatus.Pending;
-        
+
         /// <summary>
         /// Gets or sets when the holiday request was submitted. Defaults to UTC now.
         /// </summary>
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
-        
+
         /// <summary>
         /// Gets or sets when the holiday request was resolved (approved/denied/cancelled). Null if still pending.
         /// </summary>
         public DateTime? ResolvedAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the ID of the user who approved or denied this request. Null if still pending.
         /// </summary>
         public int? ResolvedByUserId { get; set; }
-        
+
         /// <summary>
         /// Gets or sets an optional comment from the resolver explaining their decision.
         /// </summary>
@@ -60,7 +60,7 @@ namespace Timora.Data.Entities
         /// Gets or sets the user who submitted this holiday request.
         /// </summary>
         public User User { get; set; } = null!;
-        
+
         /// <summary>
         /// Gets or sets the user who resolved (approved/denied) this request. Null if still pending.
         /// </summary>

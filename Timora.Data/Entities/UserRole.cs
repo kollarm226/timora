@@ -9,12 +9,12 @@ namespace Timora.Data.Entities
         /// Standard employee who can create holiday requests and notices.
         /// </summary>
         Employee = 0,
-        
+
         /// <summary>
         /// Employer who can approve/deny holiday requests from employees and has elevated permissions.
         /// </summary>
         Employer = 1,
-        
+
         /// <summary>
         /// Administrator with full system access and management capabilities.
         /// </summary>
