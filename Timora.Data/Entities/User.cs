@@ -11,9 +11,9 @@ namespace Timora.Data.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the identifier for the company the user belongs to.
+        /// Gets or sets the ID of the company the user belongs to.
         /// </summary>
-        public Guid CompanyId { get; set; }
+        public int CompanyId { get; set; }
 
         /// <summary>
         /// Gets or sets the user's first name.
@@ -44,6 +44,11 @@ namespace Timora.Data.Entities
         /// Gets or sets when the user account was created. Defaults to UTC now.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Gets or sets the company this user belongs to.
+        /// </summary>
+        public Company? Company { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of holiday requests submitted by this user.

@@ -5,7 +5,7 @@ namespace Timora.Data.Data
 {
     /// <summary>
     /// Entity Framework Core database context for the Timora application.
-    /// Provides access to Users, HolidayRequests, and Notices entities with proper relationship configuration.
+    /// Provides access to Companies, Users, HolidayRequests, and Notices entities with proper relationship configuration.
     /// </summary>
     public class TimoraDbContext : DbContext
     {
@@ -15,6 +15,11 @@ namespace Timora.Data.Data
         /// <param name="options">The options to configure the context.</param>
         public TimoraDbContext(DbContextOptions<TimoraDbContext> options)
             : base(options) { }
+
+        /// <summary>
+        /// Gets or sets the Companies entity set for managing company information.
+        /// </summary>
+        public DbSet<Company> Companies { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the Users entity set for managing user accounts and authentication.
@@ -39,9 +44,24 @@ namespace Timora.Data.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            ConfigureCompanyEntity(modelBuilder);
             ConfigureUserEntity(modelBuilder);
             ConfigureHolidayRequestEntity(modelBuilder);
             ConfigureNoticeEntity(modelBuilder);
+        }
+
+        /// <summary>
+        /// Configures the Company entity with constraints and indexes.
+        /// </summary>
+        /// <param name="modelBuilder">The model builder used to configure the entity.</param>
+        private static void ConfigureCompanyEntity(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Company>(entity =>
+            {
+                entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
+
+                entity.HasIndex(c => c.Name).HasDatabaseName("IX_Companies_Name");
+            });
         }
 
         /// <summary>
@@ -52,22 +72,26 @@ namespace Timora.Data.Data
         {
             modelBuilder.Entity<User>(entity =>
             {
-                // Configure string properties
                 entity.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.LastName).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.Email).HasMaxLength(255).IsRequired();
                 entity.Property(u => u.UserName).HasMaxLength(50).IsRequired();
-                entity.Property(u => u.PasswordHash).HasMaxLength(255).IsRequired();
 
-                // Configure enum storage
                 entity
                     .Property(u => u.Role)
                     .HasConversion<string>()
                     .HasDefaultValue(UserRole.Employee);
 
-                // Configure indexes for performance
+                entity
+                    .HasOne(u => u.Company)
+                    .WithMany(c => c.Users)
+                    .HasForeignKey(u => u.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Users_Companies_CompanyId");
+
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
                 entity.HasIndex(u => u.UserName).IsUnique().HasDatabaseName("IX_Users_UserName");
+                entity.HasIndex(u => u.CompanyId).HasDatabaseName("IX_Users_CompanyId");
             });
         }
 
@@ -79,17 +103,14 @@ namespace Timora.Data.Data
         {
             modelBuilder.Entity<HolidayRequest>(entity =>
             {
-                // Configure string properties
                 entity.Property(hr => hr.Reason).HasMaxLength(500).IsRequired();
                 entity.Property(hr => hr.ResolverComment).HasMaxLength(500);
 
-                // Configure enum storage
                 entity
                     .Property(hr => hr.Status)
                     .HasConversion<string>()
                     .HasDefaultValue(HolidayRequestStatus.Pending);
 
-                // Configure relationship: HolidayRequest -> User (Requester)
                 entity
                     .HasOne(hr => hr.User)
                     .WithMany(u => u.HolidayRequests)
@@ -97,7 +118,6 @@ namespace Timora.Data.Data
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_HolidayRequests_Users_UserId");
 
-                // Configure relationship: HolidayRequest -> User (Resolver)
                 entity
                     .HasOne(hr => hr.ResolvedBy)
                     .WithMany(u => u.ResolvedHolidayRequests)
@@ -105,7 +125,6 @@ namespace Timora.Data.Data
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("FK_HolidayRequests_Users_ResolvedByUserId");
 
-                // Configure indexes for performance
                 entity.HasIndex(hr => hr.UserId).HasDatabaseName("IX_HolidayRequests_UserId");
                 entity.HasIndex(hr => hr.Status).HasDatabaseName("IX_HolidayRequests_Status");
                 entity.HasIndex(hr => hr.StartDate).HasDatabaseName("IX_HolidayRequests_StartDate");
@@ -120,11 +139,9 @@ namespace Timora.Data.Data
         {
             modelBuilder.Entity<Notice>(entity =>
             {
-                // Configure string properties
                 entity.Property(n => n.Title).HasMaxLength(200).IsRequired();
                 entity.Property(n => n.Content).HasMaxLength(2000).IsRequired();
 
-                // Configure relationship: Notice -> User
                 entity
                     .HasOne(n => n.User)
                     .WithMany(u => u.Notices)
@@ -132,7 +149,6 @@ namespace Timora.Data.Data
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_Notices_Users_UserId");
 
-                // Configure indexes for performance
                 entity.HasIndex(n => n.UserId).HasDatabaseName("IX_Notices_UserId");
                 entity.HasIndex(n => n.CreatedAt).HasDatabaseName("IX_Notices_CreatedAt");
             });
