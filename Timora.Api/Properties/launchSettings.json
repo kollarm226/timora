@@ -8,7 +8,7 @@
       "applicationUrl": "http://localhost:5200",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "Timora.Data/Data/timoraauth-firebase-adminsdk-fbsvc-82d0b260c1.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "../Timora.Data/Database/timoraauth-firebase-adminsdk-fbsvc-82d0b260c1.json"
       }
     },
     "https": {
@@ -18,7 +18,7 @@
       "applicationUrl": "https://localhost:7126;http://localhost:5200",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "Timora.Data/Data/timoraauth-firebase-adminsdk-fbsvc-82d0b260c1.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "../Timora.Data/Database/timoraauth-firebase-adminsdk-fbsvc-82d0b260c1.json"
       }
     }
   }
