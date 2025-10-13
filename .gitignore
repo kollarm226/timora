@@ -488,3 +488,6 @@ nunit-*.xml
 *.db-shm
 *.db-wal
 *.db
+
+# Firebase Admin SDK private key file
+timoraauth-firebase-adminsdk-fbsvc-82d0b260c1.json
