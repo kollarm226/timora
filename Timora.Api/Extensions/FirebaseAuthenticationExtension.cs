@@ -8,31 +8,47 @@ namespace Timora.Api.Extensions;
 /// <summary>
 /// Extension methods for configuring Firebase Authentication services.
 /// </summary>
-public static class FirebaseAuthenticationExtension
+public static class FirebaseAuthenticationExtensions
 {
     /// <summary>
     /// Adds Firebase Authentication with JWT Bearer token validation.
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <param name="configuration">The application configuration</param>
-    /// <returns>The service collection</returns>
+    /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFirebaseAuthentication(
         this IServiceCollection services,
         IConfiguration configuration
     )
     {
-        var projectId =
-            configuration["Firebase:ProjectId"]
-            ?? throw new InvalidOperationException("Firebase ProjectId not configured");
+        var projectId = configuration["Firebase:ProjectId"];
 
-        // Initialize Firebase Admin SDK
-        FirebaseApp.Create(
-            new AppOptions
+        if (string.IsNullOrEmpty(projectId))
+        {
+            throw new InvalidOperationException(
+                "Firebase:ProjectId not configured in appsettings.json"
+            );
+        }
+
+        // Only initialize Firebase if credentials are available (skip during design-time)
+        try
+        {
+            if (FirebaseApp.DefaultInstance == null)
             {
-                Credential = GoogleCredential.GetApplicationDefault(),
-                ProjectId = projectId,
+                FirebaseApp.Create(
+                    new AppOptions
+                    {
+                        Credential = GoogleCredential.GetApplicationDefault(),
+                        ProjectId = projectId,
+                    }
+                );
             }
-        );
+        }
+        catch (Exception)
+        {
+            // Skip Firebase initialization during design-time (EF migrations)
+            // Will be initialized at runtime when credentials are available
+        }
 
         // Configure JWT Bearer Authentication
         services

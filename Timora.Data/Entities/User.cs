@@ -11,6 +11,11 @@ namespace Timora.Data.Entities
         public int Id { get; set; }
 
         /// <summary>
+        /// Gets or sets the ID of the user's Firebase account.
+        /// </summary>
+        public string FirebaseId { get; set; } = null!;
+
+        /// <summary>
         /// Gets or sets the ID of the company the user belongs to.
         /// </summary>
         public int CompanyId { get; set; }
