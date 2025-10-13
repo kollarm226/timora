@@ -2,6 +2,8 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Timora.Api.Middleware;
+using Timora.Api.Services;
 
 namespace Timora.Api.Extensions;
 
@@ -30,24 +32,42 @@ public static class FirebaseAuthenticationExtensions
             );
         }
 
-        // Only initialize Firebase if credentials are available (skip during design-time)
-        try
+        // Initialize Firebase Admin SDK only if not already initialized
+        if (FirebaseApp.DefaultInstance == null)
         {
-            if (FirebaseApp.DefaultInstance == null)
+            var credentialsPath = Environment.GetEnvironmentVariable(
+                "GOOGLE_APPLICATION_CREDENTIALS"
+            );
+
+            // Check if credentials exist (skip during design-time EF operations)
+            if (!string.IsNullOrEmpty(credentialsPath) && File.Exists(credentialsPath))
             {
-                FirebaseApp.Create(
-                    new AppOptions
-                    {
-                        Credential = GoogleCredential.GetApplicationDefault(),
-                        ProjectId = projectId,
-                    }
+                try
+                {
+                    FirebaseApp.Create(
+                        new AppOptions
+                        {
+                            Credential = GoogleCredential.FromFile(credentialsPath),
+                            ProjectId = projectId,
+                        }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to initialize Firebase Admin SDK. Check credentials file at: {credentialsPath}",
+                        ex
+                    );
+                }
+            }
+            else if (!string.IsNullOrEmpty(credentialsPath))
+            {
+                // Credentials path set but file doesn't exist
+                throw new FileNotFoundException(
+                    $"Firebase credentials file not found at: {credentialsPath}"
                 );
             }
-        }
-        catch (Exception)
-        {
-            // Skip Firebase initialization during design-time (EF migrations)
-            // Will be initialized at runtime when credentials are available
+            // else: No credentials path set - likely design-time operation, skip initialization
         }
 
         // Configure JWT Bearer Authentication
@@ -67,7 +87,19 @@ public static class FirebaseAuthenticationExtensions
             });
 
         services.AddAuthorization();
+        services.AddScoped<FirebaseAuthService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Adds Firebase authentication middleware to the application pipeline.
+    /// Must be called after UseAuthentication() and before UseAuthorization().
+    /// </summary>
+    /// <param name="app">The application builder</param>
+    /// <returns>The application builder for chaining</returns>
+    public static IApplicationBuilder UseFirebaseAuthentication(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<FirebaseAuthenticationMiddleware>();
     }
 }
