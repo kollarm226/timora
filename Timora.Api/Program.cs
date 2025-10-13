@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerServices();
 builder.Services.AddEntityFrameworkServices(builder.Configuration);
+builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
@@ -18,5 +19,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
