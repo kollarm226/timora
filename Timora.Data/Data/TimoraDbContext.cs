@@ -76,6 +76,7 @@ namespace Timora.Data.Data
                 entity.Property(u => u.LastName).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.Email).HasMaxLength(255).IsRequired();
                 entity.Property(u => u.UserName).HasMaxLength(50).IsRequired();
+                entity.Property(u => u.FirebaseId).HasMaxLength(128).IsRequired();
 
                 entity
                     .Property(u => u.Role)
@@ -91,6 +92,10 @@ namespace Timora.Data.Data
 
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
                 entity.HasIndex(u => u.UserName).IsUnique().HasDatabaseName("IX_Users_UserName");
+                entity
+                    .HasIndex(u => u.FirebaseId)
+                    .IsUnique()
+                    .HasDatabaseName("IX_Users_FirebaseId");
                 entity.HasIndex(u => u.CompanyId).HasDatabaseName("IX_Users_CompanyId");
             });
         }
