@@ -1,0 +1,30 @@
+using Timora.Data.Entities;
+
+namespace Timora.Api.Repositories
+{
+    /// <summary>
+    /// Repository interface for User entity data access operations.
+    /// </summary>
+    public interface IUserRepository
+    {
+        /// <summary>
+        /// Retrieves all users from the database.
+        /// </summary>
+        /// <returns>A collection of all users.</returns>
+        Task<IEnumerable<User>> GetAllUsersAsync();
+
+        /// <summary>
+        /// Retrieves a user by their unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user.</param>
+        /// <returns>The user if found; otherwise, null.</returns>
+        Task<User?> GetUserByIdAsync(int id);
+
+        /// <summary>
+        /// Retrieves a user by their email address.
+        /// </summary>
+        /// <param name="email">The email address of the user.</param>
+        /// <returns>The user if found; otherwise, null.</returns>
+        Task<User?> GetUserByEmailAsync(string email);
+    }
+}
