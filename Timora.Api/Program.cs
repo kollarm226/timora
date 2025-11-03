@@ -1,5 +1,7 @@
-using Timora.Api.Extensions;
 using FirebaseAdmin;
+using Timora.Api.Extensions;
+using Timora.Api.Repositories;
+using Timora.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,18 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerServices();
 builder.Services.AddEntityFrameworkServices(builder.Configuration);
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
+
+// Register Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IHolidayRequestRepository, HolidayRequestRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<INoticeRepository, NoticeRepository>();
+
+// Register Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IHolidayRequestService, HolidayRequestService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<INoticeService, NoticeService>();
 
 var app = builder.Build();
 
