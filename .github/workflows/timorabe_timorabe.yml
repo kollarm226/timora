@@ -6,7 +6,7 @@ name: Build and deploy ASP.Net Core app to Azure Web App - TimoraBE
 on:
   push:
     branches:
-      - main
+      - TimoraBE
   workflow_dispatch:
 
 jobs:
