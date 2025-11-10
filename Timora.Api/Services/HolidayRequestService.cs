@@ -37,5 +37,15 @@ namespace Timora.Api.Services
         {
             return await _holidayRequestRepository.GetHolidayRequestByIdAsync(id);
         }
+
+        /// <summary>
+        /// Creates a new holiday request in the system.
+        /// </summary>
+        /// <param name="holidayRequest">The holiday request entity to create.</param>
+        /// <returns>The created holiday request with generated ID.</returns>
+        public async Task<HolidayRequest> CreateHolidayRequestAsync(HolidayRequest holidayRequest)
+        {
+            return await _holidayRequestRepository.CreateHolidayRequestAsync(holidayRequest);
+        }
     }
 }
