@@ -19,5 +19,12 @@ namespace Timora.Api.Services
         /// <param name="id">The unique identifier of the holiday request.</param>
         /// <returns>The holiday request if found; otherwise, null.</returns>
         Task<HolidayRequest?> GetHolidayRequestByIdAsync(int id);
+
+        /// <summary>
+        /// Creates a new holiday request in the system.
+        /// </summary>
+        /// <param name="holidayRequest">The holiday request entity to create.</param>
+        /// <returns>The created holiday request with generated ID.</returns>
+        Task<HolidayRequest> CreateHolidayRequestAsync(HolidayRequest holidayRequest);
     }
 }

@@ -37,5 +37,15 @@ namespace Timora.Api.Services
         {
             return await _noticeRepository.GetNoticeByIdAsync(id);
         }
+
+        /// <summary>
+        /// Creates a new notice in the system.
+        /// </summary>
+        /// <param name="notice">The notice entity to create.</param>
+        /// <returns>The created notice with generated ID.</returns>
+        public async Task<Notice> CreateNoticeAsync(Notice notice)
+        {
+            return await _noticeRepository.CreateNoticeAsync(notice);
+        }
     }
 }

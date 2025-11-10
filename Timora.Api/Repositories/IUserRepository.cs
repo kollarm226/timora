@@ -26,5 +26,12 @@ namespace Timora.Api.Repositories
         /// <param name="email">The email address of the user.</param>
         /// <returns>The user if found; otherwise, null.</returns>
         Task<User?> GetUserByEmailAsync(string email);
+
+        /// <summary>
+        /// Creates a new user in the database.
+        /// </summary>
+        /// <param name="user">The user entity to create.</param>
+        /// <returns>The created user with generated ID.</returns>
+        Task<User> CreateUserAsync(User user);
     }
 }

@@ -37,5 +37,15 @@ namespace Timora.Api.Services
         {
             return await _companyRepository.GetCompanyByIdAsync(id);
         }
+
+        /// <summary>
+        /// Creates a new company in the system.
+        /// </summary>
+        /// <param name="company">The company entity to create.</param>
+        /// <returns>The created company with generated ID.</returns>
+        public async Task<Company> CreateCompanyAsync(Company company)
+        {
+            return await _companyRepository.CreateCompanyAsync(company);
+        }
     }
 }

@@ -44,5 +44,22 @@ namespace Timora.Api.Repositories
                 .Include(hr => hr.ResolvedBy)
                 .FirstOrDefaultAsync(hr => hr.Id == id);
         }
+
+        /// <summary>
+        /// Creates a new holiday request in the database.
+        /// </summary>
+        /// <param name="holidayRequest">The holiday request entity to create.</param>
+        /// <returns>The created holiday request with generated ID.</returns>
+        public async Task<HolidayRequest> CreateHolidayRequestAsync(HolidayRequest holidayRequest)
+        {
+            _context.HolidayRequests.Add(holidayRequest);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context
+                .HolidayRequests.Include(hr => hr.User)
+                .Include(hr => hr.ResolvedBy)
+                .FirstAsync(hr => hr.Id == holidayRequest.Id);
+        }
     }
 }

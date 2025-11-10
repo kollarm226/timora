@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Timora.Api.DTOs;
 using Timora.Api.Services;
+using Timora.Data.Entities;
 
 namespace Timora.Api.Controllers
 {
@@ -70,6 +72,53 @@ namespace Timora.Api.Controllers
             }
 
             return Ok(company);
+        }
+
+        /// <summary>
+        /// Creates a new company in the system.
+        /// </summary>
+        /// <param name="createCompanyDto">The company data to create.</param>
+        /// <returns>The created company.</returns>
+        /// <response code="201">Returns the newly created company.</response>
+        /// <response code="400">If the company data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto createCompanyDto)
+        {
+            _logger.LogInformation(
+                "Creating new company with name: {CompanyName}",
+                createCompanyDto.Name
+            );
+
+            // Map DTO to entity
+            var company = new Company { Name = createCompanyDto.Name };
+
+            try
+            {
+                var createdCompany = await _companyService.CreateCompanyAsync(company);
+                _logger.LogInformation(
+                    "Company created successfully with ID: {CompanyId}",
+                    createdCompany.Id
+                );
+
+                return CreatedAtAction(
+                    nameof(GetCompanyById),
+                    new { id = createdCompany.Id },
+                    createdCompany
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error creating company with name: {CompanyName}",
+                    createCompanyDto.Name
+                );
+                return BadRequest(new { message = "Failed to create company", error = ex.Message });
+            }
         }
     }
 }
