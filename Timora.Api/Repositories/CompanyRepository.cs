@@ -40,5 +40,21 @@ namespace Timora.Api.Repositories
                 .Companies.Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
+
+        /// <summary>
+        /// Creates a new company in the database.
+        /// </summary>
+        /// <param name="company">The company entity to create.</param>
+        /// <returns>The created company with generated ID.</returns>
+        public async Task<Company> CreateCompanyAsync(Company company)
+        {
+            _context.Companies.Add(company);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context
+                .Companies.Include(c => c.Users)
+                .FirstAsync(c => c.Id == company.Id);
+        }
     }
 }

@@ -19,5 +19,12 @@ namespace Timora.Api.Repositories
         /// <param name="id">The unique identifier of the company.</param>
         /// <returns>The company if found; otherwise, null.</returns>
         Task<Company?> GetCompanyByIdAsync(int id);
+
+        /// <summary>
+        /// Creates a new company in the database.
+        /// </summary>
+        /// <param name="company">The company entity to create.</param>
+        /// <returns>The created company with generated ID.</returns>
+        Task<Company> CreateCompanyAsync(Company company);
     }
 }
