@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Timora.Api.DTOs;
 using Timora.Api.Services;
+using Timora.Data.Entities;
 
 namespace Timora.Api.Controllers
 {
@@ -67,6 +69,60 @@ namespace Timora.Api.Controllers
             }
 
             return Ok(notice);
+        }
+
+        /// <summary>
+        /// Creates a new notice in the system.
+        /// </summary>
+        /// <param name="createNoticeDto">The notice data to create.</param>
+        /// <returns>The created notice.</returns>
+        /// <response code="201">Returns the newly created notice.</response>
+        /// <response code="400">If the notice data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CreateNotice([FromBody] CreateNoticeDto createNoticeDto)
+        {
+            _logger.LogInformation(
+                "Creating new notice with title: {Title} for user ID: {UserId}",
+                createNoticeDto.Title,
+                createNoticeDto.UserId
+            );
+
+            // Map DTO to entity
+            var notice = new Notice
+            {
+                UserId = createNoticeDto.UserId,
+                Title = createNoticeDto.Title,
+                Content = createNoticeDto.Content,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            try
+            {
+                var createdNotice = await _noticeService.CreateNoticeAsync(notice);
+                _logger.LogInformation(
+                    "Notice created successfully with ID: {NoticeId}",
+                    createdNotice.Id
+                );
+
+                return CreatedAtAction(
+                    nameof(GetNoticeById),
+                    new { id = createdNotice.Id },
+                    createdNotice
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error creating notice with title: {Title}",
+                    createNoticeDto.Title
+                );
+                return BadRequest(new { message = "Failed to create notice", error = ex.Message });
+            }
         }
     }
 }

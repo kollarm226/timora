@@ -41,5 +41,19 @@ namespace Timora.Api.Repositories
         {
             return await _context.Notices.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == id);
         }
+
+        /// <summary>
+        /// Creates a new notice in the database.
+        /// </summary>
+        /// <param name="notice">The notice entity to create.</param>
+        /// <returns>The created notice with generated ID.</returns>
+        public async Task<Notice> CreateNoticeAsync(Notice notice)
+        {
+            _context.Notices.Add(notice);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context.Notices.Include(n => n.User).FirstAsync(n => n.Id == notice.Id);
+        }
     }
 }
