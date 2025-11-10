@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Timora.Api.DTOs;
 using Timora.Api.Services;
+using Timora.Data.Entities;
 
 namespace Timora.Api.Controllers
 {
@@ -93,6 +95,60 @@ namespace Timora.Api.Controllers
             }
 
             return Ok(user);
+        }
+
+        /// <summary>
+        /// Creates a new user in the system.
+        /// </summary>
+        /// <param name="createUserDto">The user data to create.</param>
+        /// <returns>The created user.</returns>
+        /// <response code="201">Returns the newly created user.</response>
+        /// <response code="400">If the user data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
+        {
+            _logger.LogInformation("Creating new user with email: {Email}", createUserDto.Email);
+
+            // Map DTO to entity
+            var user = new User
+            {
+                FirebaseId = createUserDto.FirebaseId,
+                CompanyId = createUserDto.CompanyId,
+                FirstName = createUserDto.FirstName,
+                LastName = createUserDto.LastName,
+                Email = createUserDto.Email,
+                UserName = createUserDto.UserName,
+                Role = createUserDto.Role,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            try
+            {
+                var createdUser = await _userService.CreateUserAsync(user);
+                _logger.LogInformation(
+                    "User created successfully with ID: {UserId}",
+                    createdUser.Id
+                );
+
+                return CreatedAtAction(
+                    nameof(GetUserById),
+                    new { id = createdUser.Id },
+                    createdUser
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error creating user with email: {Email}",
+                    createUserDto.Email
+                );
+                return BadRequest(new { message = "Failed to create user", error = ex.Message });
+            }
         }
     }
 }

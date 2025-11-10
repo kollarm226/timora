@@ -52,5 +52,19 @@ namespace Timora.Api.Repositories
                 .Users.Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
+
+        /// <summary>
+        /// Creates a new user in the database.
+        /// </summary>
+        /// <param name="user">The user entity to create.</param>
+        /// <returns>The created user with generated ID.</returns>
+        public async Task<User> CreateUserAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context.Users.Include(u => u.Company).FirstAsync(u => u.Id == user.Id);
+        }
     }
 }

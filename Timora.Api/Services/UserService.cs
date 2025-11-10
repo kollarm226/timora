@@ -47,5 +47,15 @@ namespace Timora.Api.Services
         {
             return await _userRepository.GetUserByEmailAsync(email);
         }
+
+        /// <summary>
+        /// Creates a new user in the system.
+        /// </summary>
+        /// <param name="user">The user entity to create.</param>
+        /// <returns>The created user with generated ID.</returns>
+        public async Task<User> CreateUserAsync(User user)
+        {
+            return await _userRepository.CreateUserAsync(user);
+        }
     }
 }
