@@ -26,5 +26,12 @@ namespace Timora.Api.Repositories
         /// <param name="company">The company entity to create.</param>
         /// <returns>The created company with generated ID.</returns>
         Task<Company> CreateCompanyAsync(Company company);
+
+        /// <summary>
+        /// Deletes a company from the database by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to delete.</param>
+        /// <returns>True if the company was deleted; false if not found.</returns>
+        Task<bool> DeleteCompanyAsync(int id);
     }
 }

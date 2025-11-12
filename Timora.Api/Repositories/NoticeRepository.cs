@@ -55,5 +55,23 @@ namespace Timora.Api.Repositories
             // Reload with navigation properties
             return await _context.Notices.Include(n => n.User).FirstAsync(n => n.Id == notice.Id);
         }
+
+        /// <summary>
+        /// Deletes a notice from the database by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to delete.</param>
+        /// <returns>True if the notice was deleted; false if not found.</returns>
+        public async Task<bool> DeleteNoticeAsync(int id)
+        {
+            var notice = await _context.Notices.FindAsync(id);
+            if (notice == null)
+            {
+                return false;
+            }
+
+            _context.Notices.Remove(notice);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

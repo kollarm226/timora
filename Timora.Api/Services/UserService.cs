@@ -57,5 +57,15 @@ namespace Timora.Api.Services
         {
             return await _userRepository.CreateUserAsync(user);
         }
+
+        /// <summary>
+        /// Deletes a user from the system by their unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to delete.</param>
+        /// <returns>True if the user was deleted; false if not found.</returns>
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            return await _userRepository.DeleteUserAsync(id);
+        }
     }
 }

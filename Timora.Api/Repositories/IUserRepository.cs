@@ -33,5 +33,12 @@ namespace Timora.Api.Repositories
         /// <param name="user">The user entity to create.</param>
         /// <returns>The created user with generated ID.</returns>
         Task<User> CreateUserAsync(User user);
+
+        /// <summary>
+        /// Deletes a user from the database by their unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to delete.</param>
+        /// <returns>True if the user was deleted; false if not found.</returns>
+        Task<bool> DeleteUserAsync(int id);
     }
 }

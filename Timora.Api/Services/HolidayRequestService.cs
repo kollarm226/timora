@@ -47,5 +47,15 @@ namespace Timora.Api.Services
         {
             return await _holidayRequestRepository.CreateHolidayRequestAsync(holidayRequest);
         }
+
+        /// <summary>
+        /// Deletes a holiday request from the system by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to delete.</param>
+        /// <returns>True if the holiday request was deleted; false if not found.</returns>
+        public async Task<bool> DeleteHolidayRequestAsync(int id)
+        {
+            return await _holidayRequestRepository.DeleteHolidayRequestAsync(id);
+        }
     }
 }

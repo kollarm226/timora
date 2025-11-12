@@ -143,5 +143,33 @@ namespace Timora.Api.Controllers
                 );
             }
         }
+
+        /// <summary>
+        /// Deletes a holiday request from the system by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to delete.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="204">If the holiday request was successfully deleted.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the holiday request is not found.</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteHolidayRequest(int id)
+        {
+            _logger.LogInformation("Attempting to delete holiday request with ID: {HolidayRequestId}", id);
+
+            var result = await _holidayRequestService.DeleteHolidayRequestAsync(id);
+
+            if (!result)
+            {
+                _logger.LogWarning("Holiday request with ID {HolidayRequestId} not found for deletion", id);
+                return NotFound(new { message = $"Holiday request with ID {id} not found" });
+            }
+
+            _logger.LogInformation("Holiday request with ID {HolidayRequestId} deleted successfully", id);
+            return NoContent();
+        }
     }
 }
