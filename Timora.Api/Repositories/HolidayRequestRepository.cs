@@ -56,10 +56,28 @@ namespace Timora.Api.Repositories
             await _context.SaveChangesAsync();
 
             // Reload with navigation properties
-            return await _context
-                .HolidayRequests.Include(hr => hr.User)
+            return await _context.HolidayRequests
+                .Include(hr => hr.User)
                 .Include(hr => hr.ResolvedBy)
                 .FirstAsync(hr => hr.Id == holidayRequest.Id);
+        }
+
+        /// <summary>
+        /// Deletes a holiday request from the database by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to delete.</param>
+        /// <returns>True if the holiday request was deleted; false if not found.</returns>
+        public async Task<bool> DeleteHolidayRequestAsync(int id)
+        {
+            var holidayRequest = await _context.HolidayRequests.FindAsync(id);
+            if (holidayRequest == null)
+            {
+                return false;
+            }
+
+            _context.HolidayRequests.Remove(holidayRequest);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
