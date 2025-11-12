@@ -150,5 +150,33 @@ namespace Timora.Api.Controllers
                 return BadRequest(new { message = "Failed to create user", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Deletes a user from the system by their ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to delete.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="204">If the user was successfully deleted.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the user is not found.</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            _logger.LogInformation("Attempting to delete user with ID: {UserId}", id);
+
+            var result = await _userService.DeleteUserAsync(id);
+
+            if (!result)
+            {
+                _logger.LogWarning("User with ID {UserId} not found for deletion", id);
+                return NotFound(new { message = $"User with ID {id} not found" });
+            }
+
+            _logger.LogInformation("User with ID {UserId} deleted successfully", id);
+            return NoContent();
+        }
     }
 }

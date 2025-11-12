@@ -66,5 +66,23 @@ namespace Timora.Api.Repositories
             // Reload with navigation properties
             return await _context.Users.Include(u => u.Company).FirstAsync(u => u.Id == user.Id);
         }
+
+        /// <summary>
+        /// Deletes a user from the database by their unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to delete.</param>
+        /// <returns>True if the user was deleted; false if not found.</returns>
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }
