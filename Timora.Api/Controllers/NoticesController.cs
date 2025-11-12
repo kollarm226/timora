@@ -124,5 +124,33 @@ namespace Timora.Api.Controllers
                 return BadRequest(new { message = "Failed to create notice", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Deletes a notice from the system by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to delete.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="204">If the notice was successfully deleted.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the notice is not found.</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteNotice(int id)
+        {
+            _logger.LogInformation("Attempting to delete notice with ID: {NoticeId}", id);
+
+            var result = await _noticeService.DeleteNoticeAsync(id);
+
+            if (!result)
+            {
+                _logger.LogWarning("Notice with ID {NoticeId} not found for deletion", id);
+                return NotFound(new { message = $"Notice with ID {id} not found" });
+            }
+
+            _logger.LogInformation("Notice with ID {NoticeId} deleted successfully", id);
+            return NoContent();
+        }
     }
 }

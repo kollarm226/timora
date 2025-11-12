@@ -47,5 +47,15 @@ namespace Timora.Api.Services
         {
             return await _noticeRepository.CreateNoticeAsync(notice);
         }
+
+        /// <summary>
+        /// Deletes a notice from the system by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to delete.</param>
+        /// <returns>True if the notice was deleted; false if not found.</returns>
+        public async Task<bool> DeleteNoticeAsync(int id)
+        {
+            return await _noticeRepository.DeleteNoticeAsync(id);
+        }
     }
 }
