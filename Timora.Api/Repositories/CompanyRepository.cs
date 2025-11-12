@@ -56,5 +56,23 @@ namespace Timora.Api.Repositories
                 .Companies.Include(c => c.Users)
                 .FirstAsync(c => c.Id == company.Id);
         }
+
+        /// <summary>
+        /// Deletes a company from the database by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to delete.</param>
+        /// <returns>True if the company was deleted; false if not found.</returns>
+        public async Task<bool> DeleteCompanyAsync(int id)
+        {
+            var company = await _context.Companies.FindAsync(id);
+            if (company == null)
+            {
+                return false;
+            }
+
+            _context.Companies.Remove(company);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

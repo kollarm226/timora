@@ -120,5 +120,33 @@ namespace Timora.Api.Controllers
                 return BadRequest(new { message = "Failed to create company", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Deletes a company from the system by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to delete.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="204">If the company was successfully deleted.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the company is not found.</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteCompany(int id)
+        {
+            _logger.LogInformation("Attempting to delete company with ID: {CompanyId}", id);
+
+            var result = await _companyService.DeleteCompanyAsync(id);
+
+            if (!result)
+            {
+                _logger.LogWarning("Company with ID {CompanyId} not found for deletion", id);
+                return NotFound(new { message = $"Company with ID {id} not found" });
+            }
+
+            _logger.LogInformation("Company with ID {CompanyId} deleted successfully", id);
+            return NoContent();
+        }
     }
 }

@@ -47,5 +47,15 @@ namespace Timora.Api.Services
         {
             return await _companyRepository.CreateCompanyAsync(company);
         }
+
+        /// <summary>
+        /// Deletes a company from the system by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to delete.</param>
+        /// <returns>True if the company was deleted; false if not found.</returns>
+        public async Task<bool> DeleteCompanyAsync(int id)
+        {
+            return await _companyRepository.DeleteCompanyAsync(id);
+        }
     }
 }
