@@ -11,6 +11,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerServices();
 builder.Services.AddEntityFrameworkServices(builder.Configuration);
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
+builder.Services.AddFirebaseAuthentication(builder.Configuration);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowedOrigins", policy =>
+        policy.WithOrigins(
+                "https://brave-plant-0f5043a03.1.azurestaticapps.net",
+                "http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 // Register Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -44,6 +54,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowedOrigins");
 app.UseAuthentication();
 app.UseFirebaseAuthentication();
 app.UseAuthorization();
