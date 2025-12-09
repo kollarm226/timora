@@ -40,5 +40,13 @@ namespace Timora.Api.Services
         /// <param name="id">The unique identifier of the user to delete.</param>
         /// <returns>True if the user was deleted; false if not found.</returns>
         Task<bool> DeleteUserAsync(int id);
+
+        /// <summary>
+        /// Updates an existing user in the system with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to update.</param>
+        /// <param name="user">The user entity containing updated values.</param>
+        /// <returns>The updated user if found; otherwise, null.</returns>
+        Task<User?> UpdateUserAsync(int id, User user);
     }
 }

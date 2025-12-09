@@ -57,5 +57,16 @@ namespace Timora.Api.Services
         {
             return await _noticeRepository.DeleteNoticeAsync(id);
         }
+
+        /// <summary>
+        /// Updates an existing notice in the system with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to update.</param>
+        /// <param name="notice">The notice entity containing updated values.</param>
+        /// <returns>The updated notice if found; otherwise, null.</returns>
+        public async Task<Notice?> UpdateNoticeAsync(int id, Notice notice)
+        {
+            return await _noticeRepository.UpdateNoticeAsync(id, notice);
+        }
     }
 }

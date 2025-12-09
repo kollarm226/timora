@@ -73,5 +73,32 @@ namespace Timora.Api.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Updates an existing notice in the database with the provided values.
+        /// Only non-null properties from the provided notice entity will be applied.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to update.</param>
+        /// <param name="notice">The notice entity containing updated values.</param>
+        /// <returns>The updated notice if found; otherwise, null.</returns>
+        public async Task<Notice?> UpdateNoticeAsync(int id, Notice notice)
+        {
+            var existingNotice = await _context.Notices.FindAsync(id);
+            if (existingNotice == null)
+            {
+                return null;
+            }
+
+            // Apply partial updates
+            if (!string.IsNullOrEmpty(notice.Title))
+                existingNotice.Title = notice.Title;
+            if (!string.IsNullOrEmpty(notice.Content))
+                existingNotice.Content = notice.Content;
+
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context.Notices.Include(n => n.User).FirstAsync(n => n.Id == id);
+        }
     }
 }

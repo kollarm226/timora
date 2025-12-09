@@ -152,5 +152,51 @@ namespace Timora.Api.Controllers
             _logger.LogInformation("Notice with ID {NoticeId} deleted successfully", id);
             return NoContent();
         }
+
+        /// <summary>
+        /// Partially updates an existing notice by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the notice to update.</param>
+        /// <param name="updateNoticeDto">The notice data to update.</param>
+        /// <returns>The updated notice.</returns>
+        /// <response code="200">Returns the updated notice.</response>
+        /// <response code="400">If the update data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the notice is not found.</response>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateNotice(int id, [FromBody] UpdateNoticeDto updateNoticeDto)
+        {
+            _logger.LogInformation("Updating notice with ID: {NoticeId}", id);
+
+            // Map DTO to entity for partial update
+            var notice = new Notice
+            {
+                Title = updateNoticeDto.Title ?? string.Empty,
+                Content = updateNoticeDto.Content ?? string.Empty,
+            };
+
+            try
+            {
+                var updatedNotice = await _noticeService.UpdateNoticeAsync(id, notice);
+
+                if (updatedNotice == null)
+                {
+                    _logger.LogWarning("Notice with ID {NoticeId} not found for update", id);
+                    return NotFound(new { message = $"Notice with ID {id} not found" });
+                }
+
+                _logger.LogInformation("Notice with ID {NoticeId} updated successfully", id);
+                return Ok(updatedNotice);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating notice with ID: {NoticeId}", id);
+                return BadRequest(new { message = "Failed to update notice", error = ex.Message });
+            }
+        }
     }
 }

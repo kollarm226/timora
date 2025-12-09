@@ -11,7 +11,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerServices();
 builder.Services.AddEntityFrameworkServices(builder.Configuration);
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
-builder.Services.AddFirebaseAuthentication(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowedOrigins", policy =>

@@ -171,5 +171,78 @@ namespace Timora.Api.Controllers
             _logger.LogInformation("Holiday request with ID {HolidayRequestId} deleted successfully", id);
             return NoContent();
         }
+
+        /// <summary>
+        /// Partially updates an existing holiday request by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to update.</param>
+        /// <param name="updateHolidayRequestDto">The holiday request data to update.</param>
+        /// <returns>The updated holiday request.</returns>
+        /// <response code="200">Returns the updated holiday request.</response>
+        /// <response code="400">If the update data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the holiday request is not found.</response>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateHolidayRequest(
+            int id,
+            [FromBody] UpdateHolidayRequestDto updateHolidayRequestDto
+        )
+        {
+            _logger.LogInformation("Updating holiday request with ID: {HolidayRequestId}", id);
+
+            // Validate dates if both are provided
+            if (updateHolidayRequestDto.StartDate.HasValue && updateHolidayRequestDto.EndDate.HasValue)
+            {
+                if (updateHolidayRequestDto.EndDate < updateHolidayRequestDto.StartDate)
+                {
+                    _logger.LogWarning("Invalid date range: End date is before start date");
+                    return BadRequest(
+                        new { message = "End date must be after or equal to start date" }
+                    );
+                }
+            }
+
+            // Map DTO to entity for partial update
+            var holidayRequest = new HolidayRequest
+            {
+                StartDate = updateHolidayRequestDto.StartDate ?? default,
+                EndDate = updateHolidayRequestDto.EndDate ?? default,
+                Reason = updateHolidayRequestDto.Reason ?? string.Empty,
+                Status = updateHolidayRequestDto.Status ?? HolidayRequestStatus.Pending,
+                ResolvedByUserId = updateHolidayRequestDto.ResolvedByUserId,
+                ResolverComment = updateHolidayRequestDto.ResolverComment,
+            };
+
+            try
+            {
+                var updatedHolidayRequest = await _holidayRequestService.UpdateHolidayRequestAsync(
+                    id,
+                    holidayRequest
+                );
+
+                if (updatedHolidayRequest == null)
+                {
+                    _logger.LogWarning("Holiday request with ID {HolidayRequestId} not found for update", id);
+                    return NotFound(new { message = $"Holiday request with ID {id} not found" });
+                }
+
+                _logger.LogInformation(
+                    "Holiday request with ID {HolidayRequestId} updated successfully",
+                    id
+                );
+                return Ok(updatedHolidayRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating holiday request with ID: {HolidayRequestId}", id);
+                return BadRequest(
+                    new { message = "Failed to update holiday request", error = ex.Message }
+                );
+            }
+        }
     }
 }

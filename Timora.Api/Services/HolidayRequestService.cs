@@ -57,5 +57,16 @@ namespace Timora.Api.Services
         {
             return await _holidayRequestRepository.DeleteHolidayRequestAsync(id);
         }
+
+        /// <summary>
+        /// Updates an existing holiday request in the system with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to update.</param>
+        /// <param name="holidayRequest">The holiday request entity containing updated values.</param>
+        /// <returns>The updated holiday request if found; otherwise, null.</returns>
+        public async Task<HolidayRequest?> UpdateHolidayRequestAsync(int id, HolidayRequest holidayRequest)
+        {
+            return await _holidayRequestRepository.UpdateHolidayRequestAsync(id, holidayRequest);
+        }
     }
 }

@@ -79,5 +79,52 @@ namespace Timora.Api.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Updates an existing holiday request in the database with the provided values.
+        /// Only non-null/non-default properties from the provided holiday request entity will be applied.
+        /// Automatically sets ResolvedAt when status changes from Pending.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to update.</param>
+        /// <param name="holidayRequest">The holiday request entity containing updated values.</param>
+        /// <returns>The updated holiday request if found; otherwise, null.</returns>
+        public async Task<HolidayRequest?> UpdateHolidayRequestAsync(int id, HolidayRequest holidayRequest)
+        {
+            var existingRequest = await _context.HolidayRequests.FindAsync(id);
+            if (existingRequest == null)
+            {
+                return null;
+            }
+
+            // Apply partial updates
+            if (holidayRequest.StartDate != default)
+                existingRequest.StartDate = holidayRequest.StartDate;
+            if (holidayRequest.EndDate != default)
+                existingRequest.EndDate = holidayRequest.EndDate;
+            if (!string.IsNullOrEmpty(holidayRequest.Reason))
+                existingRequest.Reason = holidayRequest.Reason;
+            if (holidayRequest.ResolvedByUserId.HasValue)
+                existingRequest.ResolvedByUserId = holidayRequest.ResolvedByUserId;
+            if (holidayRequest.ResolverComment != null)
+                existingRequest.ResolverComment = holidayRequest.ResolverComment;
+
+            // Handle status change and automatically set ResolvedAt
+            if (holidayRequest.Status != existingRequest.Status)
+            {
+                existingRequest.Status = holidayRequest.Status;
+                if (holidayRequest.Status != HolidayRequestStatus.Pending)
+                {
+                    existingRequest.ResolvedAt = DateTime.UtcNow;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context.HolidayRequests
+                .Include(hr => hr.User)
+                .Include(hr => hr.ResolvedBy)
+                .FirstAsync(hr => hr.Id == id);
+        }
     }
 }
