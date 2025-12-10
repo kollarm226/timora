@@ -67,5 +67,16 @@ namespace Timora.Api.Services
         {
             return await _userRepository.DeleteUserAsync(id);
         }
+
+        /// <summary>
+        /// Updates an existing user in the system with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to update.</param>
+        /// <param name="user">The user entity containing updated values.</param>
+        /// <returns>The updated user if found; otherwise, null.</returns>
+        public async Task<User?> UpdateUserAsync(int id, User user)
+        {
+            return await _userRepository.UpdateUserAsync(id, user);
+        }
     }
 }

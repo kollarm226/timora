@@ -33,5 +33,13 @@ namespace Timora.Api.Repositories
         /// <param name="id">The unique identifier of the holiday request to delete.</param>
         /// <returns>True if the holiday request was deleted; false if not found.</returns>
         Task<bool> DeleteHolidayRequestAsync(int id);
+
+        /// <summary>
+        /// Updates an existing holiday request in the database with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the holiday request to update.</param>
+        /// <param name="holidayRequest">The holiday request entity containing updated values.</param>
+        /// <returns>The updated holiday request if found; otherwise, null.</returns>
+        Task<HolidayRequest?> UpdateHolidayRequestAsync(int id, HolidayRequest holidayRequest);
     }
 }

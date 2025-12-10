@@ -178,5 +178,55 @@ namespace Timora.Api.Controllers
             _logger.LogInformation("User with ID {UserId} deleted successfully", id);
             return NoContent();
         }
+
+        /// <summary>
+        /// Partially updates an existing user by their ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to update.</param>
+        /// <param name="updateUserDto">The user data to update.</param>
+        /// <returns>The updated user.</returns>
+        /// <response code="200">Returns the updated user.</response>
+        /// <response code="400">If the update data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the user is not found.</response>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            _logger.LogInformation("Updating user with ID: {UserId}", id);
+
+            // Map DTO to entity for partial update
+            var user = new User
+            {
+                CompanyId = updateUserDto.CompanyId ?? 0,
+                FirstName = updateUserDto.FirstName ?? string.Empty,
+                LastName = updateUserDto.LastName ?? string.Empty,
+                Email = updateUserDto.Email ?? string.Empty,
+                UserName = updateUserDto.UserName ?? string.Empty,
+                Role = updateUserDto.Role ?? UserRole.Employee,
+            };
+
+            try
+            {
+                var updatedUser = await _userService.UpdateUserAsync(id, user);
+
+                if (updatedUser == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found for update", id);
+                    return NotFound(new { message = $"User with ID {id} not found" });
+                }
+
+                _logger.LogInformation("User with ID {UserId} updated successfully", id);
+                return Ok(updatedUser);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user with ID: {UserId}", id);
+                return BadRequest(new { message = "Failed to update user", error = ex.Message });
+            }
+        }
     }
 }

@@ -57,5 +57,16 @@ namespace Timora.Api.Services
         {
             return await _companyRepository.DeleteCompanyAsync(id);
         }
+
+        /// <summary>
+        /// Updates an existing company in the system with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to update.</param>
+        /// <param name="company">The company entity containing updated values.</param>
+        /// <returns>The updated company if found; otherwise, null.</returns>
+        public async Task<Company?> UpdateCompanyAsync(int id, Company company)
+        {
+            return await _companyRepository.UpdateCompanyAsync(id, company);
+        }
     }
 }

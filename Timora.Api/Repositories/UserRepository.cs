@@ -84,5 +84,42 @@ namespace Timora.Api.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Updates an existing user in the database with the provided values.
+        /// Only non-null properties from the provided user entity will be applied.
+        /// </summary>
+        /// <param name="id">The unique identifier of the user to update.</param>
+        /// <param name="user">The user entity containing updated values.</param>
+        /// <returns>The updated user if found; otherwise, null.</returns>
+        public async Task<User?> UpdateUserAsync(int id, User user)
+        {
+            var existingUser = await _context.Users.FindAsync(id);
+            if (existingUser == null)
+            {
+                return null;
+            }
+
+            // Apply partial updates - only update fields that are provided
+            if (user.CompanyId != 0)
+                existingUser.CompanyId = user.CompanyId;
+            if (!string.IsNullOrEmpty(user.FirstName))
+                existingUser.FirstName = user.FirstName;
+            if (!string.IsNullOrEmpty(user.LastName))
+                existingUser.LastName = user.LastName;
+            if (!string.IsNullOrEmpty(user.Email))
+                existingUser.Email = user.Email;
+            if (!string.IsNullOrEmpty(user.UserName))
+                existingUser.UserName = user.UserName;
+            if (user.Role != existingUser.Role)
+                existingUser.Role = user.Role;
+
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context
+                .Users.Include(u => u.Company)
+                .FirstAsync(u => u.Id == id);
+        }
     }
 }

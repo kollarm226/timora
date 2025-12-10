@@ -33,5 +33,13 @@ namespace Timora.Api.Repositories
         /// <param name="id">The unique identifier of the company to delete.</param>
         /// <returns>True if the company was deleted; false if not found.</returns>
         Task<bool> DeleteCompanyAsync(int id);
+
+        /// <summary>
+        /// Updates an existing company in the database with the provided values.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to update.</param>
+        /// <param name="company">The company entity containing updated values.</param>
+        /// <returns>The updated company if found; otherwise, null.</returns>
+        Task<Company?> UpdateCompanyAsync(int id, Company company);
     }
 }

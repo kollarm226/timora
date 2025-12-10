@@ -148,5 +148,50 @@ namespace Timora.Api.Controllers
             _logger.LogInformation("Company with ID {CompanyId} deleted successfully", id);
             return NoContent();
         }
+
+        /// <summary>
+        /// Partially updates an existing company by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to update.</param>
+        /// <param name="updateCompanyDto">The company data to update.</param>
+        /// <returns>The updated company.</returns>
+        /// <response code="200">Returns the updated company.</response>
+        /// <response code="400">If the update data is invalid.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the company is not found.</response>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateCompany(int id, [FromBody] UpdateCompanyDto updateCompanyDto)
+        {
+            _logger.LogInformation("Updating company with ID: {CompanyId}", id);
+
+            // Map DTO to entity for partial update
+            var company = new Company
+            {
+                Name = updateCompanyDto.Name ?? string.Empty,
+            };
+
+            try
+            {
+                var updatedCompany = await _companyService.UpdateCompanyAsync(id, company);
+
+                if (updatedCompany == null)
+                {
+                    _logger.LogWarning("Company with ID {CompanyId} not found for update", id);
+                    return NotFound(new { message = $"Company with ID {id} not found" });
+                }
+
+                _logger.LogInformation("Company with ID {CompanyId} updated successfully", id);
+                return Ok(updatedCompany);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating company with ID: {CompanyId}", id);
+                return BadRequest(new { message = "Failed to update company", error = ex.Message });
+            }
+        }
     }
 }

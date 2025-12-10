@@ -74,5 +74,32 @@ namespace Timora.Api.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Updates an existing company in the database with the provided values.
+        /// Only non-null properties from the provided company entity will be applied.
+        /// </summary>
+        /// <param name="id">The unique identifier of the company to update.</param>
+        /// <param name="company">The company entity containing updated values.</param>
+        /// <returns>The updated company if found; otherwise, null.</returns>
+        public async Task<Company?> UpdateCompanyAsync(int id, Company company)
+        {
+            var existingCompany = await _context.Companies.FindAsync(id);
+            if (existingCompany == null)
+            {
+                return null;
+            }
+
+            // Apply partial updates
+            if (!string.IsNullOrEmpty(company.Name))
+                existingCompany.Name = company.Name;
+
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context
+                .Companies.Include(c => c.Users)
+                .FirstAsync(c => c.Id == id);
+        }
     }
 }
