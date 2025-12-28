@@ -48,41 +48,63 @@ namespace Timora.Api.Middleware
                 if (firebaseUser != null)
                 {
                     // Find matching user in the database by Firebase UID
-                    var user = await dbContext
-                        .Users.Include(u => u.Company)
-                        .FirstOrDefaultAsync(u => u.FirebaseId == firebaseUser.Uid);
-
-                    if (user != null)
+                    try
                     {
-                        // Populate ClaimsPrincipal with user data from database (source of truth)
-                        var claims = new List<Claim>
+                        var user = await dbContext
+                            .Users.Include(u => u.Company)
+                            .FirstOrDefaultAsync(u => u.FirebaseId == firebaseUser.Uid);
+
+                        if (user != null)
                         {
-                            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                            new(ClaimTypes.Name, user.UserName),
-                            new(ClaimTypes.Email, user.Email),
-                            new(ClaimTypes.GivenName, user.FirstName),
-                            new(ClaimTypes.Surname, user.LastName),
-                            new(ClaimTypes.Role, user.Role.ToString()),
-                            new("CompanyId", user.CompanyId.ToString()),
-                            new("FirebaseUid", firebaseUser.Uid),
-                        };
+                            // Populate ClaimsPrincipal with user data from database (source of truth)
+                            var claims = new List<Claim>
+                            {
+                                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                                new("FirebaseUid", firebaseUser.Uid),
+                                new("CompanyId", user.CompanyId.ToString()),
+                                new(ClaimTypes.Role, user.Role.ToString()),
+                            };
 
-                        var identity = new ClaimsIdentity(claims, "Firebase");
-                        context.User = new ClaimsPrincipal(identity);
+                            // Add optional claims only when values are present to avoid ArgumentNullException
+                            if (!string.IsNullOrWhiteSpace(user.UserName))
+                            {
+                                claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                            }
+                            if (!string.IsNullOrWhiteSpace(user.Email))
+                            {
+                                claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                            }
+                            if (!string.IsNullOrWhiteSpace(user.FirstName))
+                            {
+                                claims.Add(new Claim(ClaimTypes.GivenName, user.FirstName));
+                            }
+                            if (!string.IsNullOrWhiteSpace(user.LastName))
+                            {
+                                claims.Add(new Claim(ClaimTypes.Surname, user.LastName));
+                            }
 
-                        _logger.LogInformation(
-                            "Authenticated user {UserId} ({Email}) from Firebase UID {FirebaseUid}",
-                            user.Id,
-                            user.Email,
-                            firebaseUser.Uid
-                        );
+                            var identity = new ClaimsIdentity(claims, "Firebase");
+                            context.User = new ClaimsPrincipal(identity);
+
+                            _logger.LogInformation(
+                                "Authenticated user {UserId} ({Email}) from Firebase UID {FirebaseUid}",
+                                user.Id,
+                                user.Email,
+                                firebaseUser.Uid
+                            );
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "Firebase user {FirebaseUid} authenticated but no matching User entity found in database",
+                                firebaseUser.Uid
+                            );
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        _logger.LogWarning(
-                            "Firebase user {FirebaseUid} authenticated but no matching User entity found in database",
-                            firebaseUser.Uid
-                        );
+                        _logger.LogError(ex, "Failed to enrich user from DB for Firebase UID {FirebaseUid}. Continuing without DB enrichment.", firebaseUser.Uid);
+                        // Leave context.User as set by JWT Bearer if present
                     }
                 }
             }
