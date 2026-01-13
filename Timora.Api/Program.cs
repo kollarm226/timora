@@ -35,6 +35,22 @@ builder.Services.AddScoped<INoticeService, NoticeService>();
 
 var app = builder.Build();
 
+// Ensure database is created (for Azure deployment)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<Timora.Data.Data.TimoraDbContext>();
+    try
+    {
+        dbContext.Database.EnsureCreated();
+        app.Logger.LogInformation("Database ensured/created at: {ConnectionString}", 
+            builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to ensure database creation");
+    }
+}
+
 // Log Firebase initialization status
 if (FirebaseApp.DefaultInstance != null)
 {
