@@ -54,6 +54,18 @@ namespace Timora.Api.Repositories
         }
 
         /// <summary>
+        /// Retrieves a user by their Firebase UID with their associated company.
+        /// </summary>
+        /// <param name="firebaseId">The Firebase UID of the user.</param>
+        /// <returns>The user if found; otherwise, null.</returns>
+        public async Task<User?> GetUserByFirebaseIdAsync(string firebaseId)
+        {
+            return await _context
+                .Users.Include(u => u.Company)
+                .FirstOrDefaultAsync(u => u.FirebaseId == firebaseId);
+        }
+
+        /// <summary>
         /// Creates a new user in the database.
         /// </summary>
         /// <param name="user">The user entity to create.</param>

@@ -28,6 +28,13 @@ namespace Timora.Api.Services
         Task<User?> GetUserByEmailAsync(string email);
 
         /// <summary>
+        /// Retrieves a user by their Firebase UID.
+        /// </summary>
+        /// <param name="firebaseId">The Firebase UID of the user.</param>
+        /// <returns>The user if found; otherwise, null.</returns>
+        Task<User?> GetUserByFirebaseIdAsync(string firebaseId);
+
+        /// <summary>
         /// Creates a new user in the system.
         /// </summary>
         /// <param name="user">The user entity to create.</param>

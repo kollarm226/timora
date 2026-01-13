@@ -1,12 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Timora.Api.DTOs;
+using Timora.Api.Services;
+using Timora.Data.Entities;
 
 namespace Timora.Api.Controllers;
 
 /// <summary>
 /// Controller for authentication-related endpoints.
-/// Provides user information retrieval and Firebase token validation testing.
+/// Provides user information retrieval, registration, and Firebase token validation.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -14,14 +17,24 @@ namespace Timora.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ILogger<AuthController> _logger;
+    private readonly IUserService _userService;
+    private readonly ICompanyService _companyService;
 
     /// <summary>
     /// Initializes a new instance of the AuthController.
     /// </summary>
     /// <param name="logger">Logger for diagnostic information.</param>
-    public AuthController(ILogger<AuthController> logger)
+    /// <param name="userService">The user service.</param>
+    /// <param name="companyService">The company service.</param>
+    public AuthController(
+        ILogger<AuthController> logger,
+        IUserService userService,
+        ICompanyService companyService
+    )
     {
         _logger = logger;
+        _userService = userService;
+        _companyService = companyService;
     }
 
     /// <summary>
@@ -61,5 +74,146 @@ public class AuthController : ControllerBase
                 AllClaims = User.Claims.Select(c => new { c.Type, c.Value }),
             }
         );
+    }
+
+    /// <summary>
+    /// Registers a new user after Firebase authentication.
+    /// User can either join an existing company (as Employee) or create a new company (as Employer).
+    /// </summary>
+    /// <param name="registerDto">The registration data.</param>
+    /// <returns>The created user profile.</returns>
+    /// <response code="201">Returns the newly created user.</response>
+    /// <response code="400">If the registration data is invalid or company not found.</response>
+    /// <response code="401">If the user is not authenticated with Firebase.</response>
+    /// <response code="409">If the user is already registered.</response>
+    [HttpPost("register")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
+    {
+        // Extract Firebase UID and email from claims (set by middleware)
+        var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+        if (string.IsNullOrEmpty(firebaseUid))
+        {
+            _logger.LogWarning("Registration attempt without Firebase UID in claims");
+            return Unauthorized(new { message = "Invalid authentication. Firebase UID not found in token." });
+        }
+
+        // Check if user already exists
+        var existingUser = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+        if (existingUser != null)
+        {
+            _logger.LogWarning("User with Firebase UID {FirebaseUid} attempted to register but already exists", firebaseUid);
+            return Conflict(new { message = "User is already registered.", userId = existingUser.Id });
+        }
+
+        int companyId;
+        UserRole role;
+
+        // Handle company selection/creation
+        if (!string.IsNullOrWhiteSpace(registerDto.CompanyName))
+        {
+            // Create new company - user becomes Employer (admin)
+            var newCompany = new Company
+            {
+                Name = registerDto.CompanyName.Trim(),
+            };
+
+            try
+            {
+                var createdCompany = await _companyService.CreateCompanyAsync(newCompany);
+                companyId = createdCompany.Id;
+                role = UserRole.Employer;
+
+                _logger.LogInformation(
+                    "Created new company '{CompanyName}' with ID {CompanyId} for user {FirebaseUid}",
+                    createdCompany.Name,
+                    companyId,
+                    firebaseUid
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create company '{CompanyName}' for user {FirebaseUid}", registerDto.CompanyName, firebaseUid);
+                return BadRequest(new { message = "Failed to create company.", error = ex.Message });
+            }
+        }
+        else if (registerDto.CompanyId.HasValue)
+        {
+            // Join existing company - user becomes Employee
+            var existingCompany = await _companyService.GetCompanyByIdAsync(registerDto.CompanyId.Value);
+            if (existingCompany == null)
+            {
+                _logger.LogWarning("User {FirebaseUid} tried to join non-existent company {CompanyId}", firebaseUid, registerDto.CompanyId.Value);
+                return BadRequest(new { message = $"Company with ID {registerDto.CompanyId.Value} not found." });
+            }
+
+            companyId = existingCompany.Id;
+            role = UserRole.Employee;
+
+            _logger.LogInformation(
+                "User {FirebaseUid} joining existing company '{CompanyName}' (ID: {CompanyId})",
+                firebaseUid,
+                existingCompany.Name,
+                companyId
+            );
+        }
+        else
+        {
+            // This shouldn't happen due to DTO validation, but handle it anyway
+            return BadRequest(new { message = "Either CompanyId or CompanyName must be provided." });
+        }
+
+        // Create the user
+        var user = new User
+        {
+            FirebaseId = firebaseUid,
+            Email = email ?? $"{firebaseUid}@unknown.com",
+            FirstName = registerDto.FirstName.Trim(),
+            LastName = registerDto.LastName.Trim(),
+            UserName = registerDto.UserName.Trim(),
+            CompanyId = companyId,
+            Role = role,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        try
+        {
+            var createdUser = await _userService.CreateUserAsync(user);
+
+            _logger.LogInformation(
+                "Successfully registered user {UserId} ({Email}) with role {Role} in company {CompanyId}",
+                createdUser.Id,
+                createdUser.Email,
+                role,
+                companyId
+            );
+
+            return CreatedAtAction(
+                nameof(GetCurrentUser),
+                new
+                {
+                    UserId = createdUser.Id,
+                    Email = createdUser.Email,
+                    UserName = createdUser.UserName,
+                    FirstName = createdUser.FirstName,
+                    LastName = createdUser.LastName,
+                    Role = createdUser.Role.ToString(),
+                    CompanyId = createdUser.CompanyId,
+                    CompanyName = createdUser.Company?.Name,
+                    FirebaseUid = createdUser.FirebaseId,
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create user for Firebase UID {FirebaseUid}", firebaseUid);
+            return BadRequest(new { message = "Failed to create user.", error = ex.Message });
+        }
     }
 }
