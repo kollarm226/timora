@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Timora.Api.Controllers;
+using Timora.Api.Services;
 
 namespace Timora.Tests.Controllers;
 
@@ -13,12 +14,20 @@ namespace Timora.Tests.Controllers;
 public class AuthControllerTests
 {
     private readonly Mock<ILogger<AuthController>> _mockLogger;
+    private readonly Mock<IUserService> _mockUserService;
+    private readonly Mock<ICompanyService> _mockCompanyService;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(_mockLogger.Object);
+        _mockUserService = new Mock<IUserService>();
+        _mockCompanyService = new Mock<ICompanyService>();
+        _controller = new AuthController(
+            _mockLogger.Object,
+            _mockUserService.Object,
+            _mockCompanyService.Object
+        );
     }
 
     /// <summary>
