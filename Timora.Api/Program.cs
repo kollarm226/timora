@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FirebaseAdmin;
 using Timora.Api.Extensions;
 using Timora.Api.Repositories;
@@ -6,7 +7,13 @@ using Timora.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Prevent circular reference errors when serializing entities with navigation properties
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerServices();
 builder.Services.AddEntityFrameworkServices(builder.Configuration);
