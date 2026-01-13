@@ -34,10 +34,6 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
-      # Run unit tests
-      - name: Run tests
-        run: dotnet test Timora.Tests/Timora.Tests.csproj --no-build --configuration Release
-
       # Publish the project
       - name: Publish API
         run: dotnet publish Timora.Api/Timora.Api.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
@@ -49,9 +45,46 @@ jobs:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
-  deploy:
+  test:
     runs-on: windows-latest
     needs: build
+    permissions:
+      contents: read
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up .NET Core SDK
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore Timora.sln
+
+      # Build the project (needed for tests)
+      - name: Build with dotnet
+        run: dotnet build --configuration Release --no-restore
+
+      # Run unit tests
+      - name: Run unit tests
+        run: dotnet test Timora.Tests/Timora.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+      # Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: Timora.Tests/TestResults/*.trx
+
+  deploy:
+    runs-on: windows-latest
+    needs: [build, test]
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
@@ -79,4 +112,3 @@ jobs:
           app-name: 'TimoraBE'
           slot-name: 'Production'
           package: .
-          
