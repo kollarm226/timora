@@ -48,5 +48,12 @@ namespace Timora.Api.Repositories
         /// <param name="user">The user entity containing updated values.</param>
         /// <returns>The updated user if found; otherwise, null.</returns>
         Task<User?> UpdateUserAsync(int id, User user);
+
+        /// <summary>
+        /// Retrieves a user by their Firebase UID.
+        /// </summary>
+        /// <param name="firebaseId">The Firebase UID of the user.</param>
+        /// <returns>The user if found; otherwise, null.</returns>
+        Task<User?> GetUserByFirebaseIdAsync(string firebaseId);
     }
 }

@@ -96,9 +96,21 @@ namespace Timora.Api.Middleware
                         else
                         {
                             _logger.LogWarning(
-                                "Firebase user {FirebaseUid} authenticated but no matching User entity found in database",
+                                "Firebase user {FirebaseUid} authenticated but no matching User entity found in database. User needs to complete registration.",
                                 firebaseUser.Uid
                             );
+
+                            // Set minimal claims for unregistered Firebase users
+                            // This allows them to access the registration endpoint
+                            var minimalClaims = new List<Claim>
+                            {
+                                new("FirebaseUid", firebaseUser.Uid),
+                                new(ClaimTypes.Email, firebaseUser.Email ?? string.Empty),
+                                new("IsRegistered", "false"),
+                            };
+
+                            var minimalIdentity = new ClaimsIdentity(minimalClaims, "Firebase");
+                            context.User = new ClaimsPrincipal(minimalIdentity);
                         }
                     }
                     catch (Exception ex)

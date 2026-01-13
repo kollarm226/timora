@@ -49,6 +49,25 @@ namespace Timora.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves all companies for registration purposes (public endpoint).
+        /// Returns only basic company info (Id and Name) for unregistered users to select from.
+        /// </summary>
+        /// <returns>A list of companies with basic info.</returns>
+        /// <response code="200">Returns the list of companies.</response>
+        [HttpGet("public")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCompaniesForRegistration()
+        {
+            _logger.LogInformation("Fetching companies for registration (public)");
+            var companies = await _companyService.GetAllCompaniesAsync();
+            
+            // Return only basic info for security
+            var publicCompanies = companies.Select(c => new { c.Id, c.Name });
+            return Ok(publicCompanies);
+        }
+
+        /// <summary>
         /// Retrieves a specific company by its ID.
         /// </summary>
         /// <param name="id">The unique identifier of the company.</param>
