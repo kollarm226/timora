@@ -68,6 +68,30 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerServices();
 }
 
+// Global exception handler - return detailed errors for debugging
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Unhandled exception for {Method} {Path}", 
+            context.Request.Method, context.Request.Path);
+        
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new 
+        { 
+            error = "Internal Server Error",
+            message = ex.Message,
+            stackTrace = ex.StackTrace,
+            innerException = ex.InnerException?.Message
+        });
+    }
+});
+
 app.UseHttpsRedirection();
 app.UseCors("AllowedOrigins");
 app.UseAuthentication();
