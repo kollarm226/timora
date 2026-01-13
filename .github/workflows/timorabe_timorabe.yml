@@ -70,9 +70,39 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release --no-restore
 
-      # Run unit tests
-      - name: Run unit tests
-        run: dotnet test Timora.Tests/Timora.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+      # Run unit tests with code coverage
+      - name: Run unit tests with coverage
+        id: test
+        run: dotnet test Timora.Tests/Timora.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+        continue-on-error: false
+
+      # Install ReportGenerator
+      - name: Install ReportGenerator
+        if: always()
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      # Generate coverage report
+      - name: Generate coverage report
+        if: always()
+        run: |
+          $coverageFiles = Get-ChildItem -Path ./TestResults -Filter "coverage.cobertura.xml" -Recurse -ErrorAction SilentlyContinue
+          if ($coverageFiles) {
+            Write-Host "Found coverage files: $($coverageFiles.FullName -join ', ')"
+            reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:"Html;Cobertura;MarkdownSummaryGithub"
+          } else {
+            Write-Host "No coverage files found. Skipping report generation."
+            New-Item -ItemType Directory -Force -Path ./CoverageReport | Out-Null
+            "# Coverage Report`n`nNo coverage data available. Tests may have failed or no coverage was collected." | Out-File -FilePath ./CoverageReport/SummaryGithub.md
+          }
+
+      # Upload coverage report as artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ./CoverageReport
+          if-no-files-found: ignore
 
       # Upload test results
       - name: Upload test results
@@ -80,7 +110,16 @@ jobs:
         if: always()
         with:
           name: test-results
-          path: Timora.Tests/TestResults/*.trx
+          path: ./TestResults/**/*.trx
+          if-no-files-found: ignore
+
+      # Add coverage summary to job summary
+      - name: Add coverage to summary
+        if: always()
+        run: |
+          if (Test-Path "./CoverageReport/SummaryGithub.md") {
+            Get-Content "./CoverageReport/SummaryGithub.md" >> $env:GITHUB_STEP_SUMMARY
+          }
 
   deploy:
     runs-on: windows-latest
