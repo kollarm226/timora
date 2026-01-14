@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Timora.Data.Entities
 {
     /// <summary>
     /// Represents a holiday request submitted by an employee for approval by an employer.
     /// Tracks the request lifecycle from submission through approval/denial.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class HolidayRequest
     {
         /// <summary>
