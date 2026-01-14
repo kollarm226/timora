@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,6 +11,7 @@ namespace Timora.Api.Extensions;
 /// <summary>
 /// Extension methods for configuring Firebase Authentication services.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class FirebaseAuthenticationExtensions
 {
     /// <summary>

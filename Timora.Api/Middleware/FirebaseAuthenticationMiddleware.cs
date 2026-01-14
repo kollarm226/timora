@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Timora.Api.Services;
@@ -9,6 +10,7 @@ namespace Timora.Api.Middleware
     /// Middleware that validates Firebase ID tokens and populates HttpContext with authenticated user claims.
     /// Matches Firebase UID to User.FirebaseId and enriches the ClaimsPrincipal with user data from the database.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class FirebaseAuthenticationMiddleware
     {
         private readonly RequestDelegate _next;

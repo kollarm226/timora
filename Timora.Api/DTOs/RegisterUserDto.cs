@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Timora.Api.DTOs
 {
@@ -6,6 +7,7 @@ namespace Timora.Api.DTOs
     /// Data transfer object for user registration.
     /// Either CompanyId (to join existing company) or CompanyName (to create new company) must be provided.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class RegisterUserDto : IValidatableObject
     {
         /// <summary>

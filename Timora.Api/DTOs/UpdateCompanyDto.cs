@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Timora.Api.DTOs
 {
@@ -6,6 +7,7 @@ namespace Timora.Api.DTOs
     /// Data transfer object for partially updating a company.
     /// All properties are nullable to support partial updates.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class UpdateCompanyDto
     {
         /// <summary>

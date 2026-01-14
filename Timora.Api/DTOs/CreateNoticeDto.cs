@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Timora.Api.DTOs
 {
     /// <summary>
     /// Data transfer object for creating a new notice.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class CreateNoticeDto
     {
         /// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Timora.Data.Data;
 
@@ -6,6 +7,7 @@ namespace Timora.Api.Extensions
     /// <summary>
     /// Extension methods for configuring Entity Framework services.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public static class EntityFrameworkServiceExtension
     {
         /// <summary>

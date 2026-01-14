@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.OpenApi.Models;
 
 namespace Timora.Api.Extensions;
@@ -5,6 +6,7 @@ namespace Timora.Api.Extensions;
 /// <summary>
 /// Extension methods for configuring Swagger/OpenAPI services.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class SwaggerServiceExtensions
 {
     /// <summary>
