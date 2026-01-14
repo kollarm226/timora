@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Timora.Api.DTOs;
 
@@ -7,6 +8,7 @@ namespace Timora.Api.DTOs;
 /// Contains the company ID that the user claims to be logging into.
 /// Backend validates this against the user's actual company affiliation.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public class LoginDto
 {
     /// <summary>

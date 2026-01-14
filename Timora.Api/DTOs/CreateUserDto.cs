@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Timora.Data.Entities;
 
 namespace Timora.Api.DTOs
@@ -6,6 +7,7 @@ namespace Timora.Api.DTOs
     /// <summary>
     /// Data transfer object for creating a new user.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class CreateUserDto
     {
         /// <summary>
