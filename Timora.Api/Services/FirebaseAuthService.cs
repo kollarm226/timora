@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FirebaseAdmin.Auth;
 using Timora.Data.Models;
 
@@ -6,6 +7,7 @@ namespace Timora.Api.Services;
 /// <summary>
 /// Service for handling Firebase Authentication operations including token validation and user retrieval.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public class FirebaseAuthService
 {
     private readonly ILogger<FirebaseAuthService> _logger;

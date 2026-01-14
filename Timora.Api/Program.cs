@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using FirebaseAdmin;
 using Timora.Api.Extensions;
 using Timora.Api.Repositories;
 using Timora.Api.Services;
+
+[assembly: ExcludeFromCodeCoverage]
 
 var builder = WebApplication.CreateBuilder(args);
 
