@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Timora.Api.Controllers;
+using Timora.Api.DTOs;
 using Timora.Api.Services;
+using Timora.Data.Entities;
 
 namespace Timora.Tests.Controllers;
 
@@ -87,5 +89,200 @@ public class AuthControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsUnauthorized_WhenFirebaseUidMissing()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = BuildUser() }
+        };
+
+        var response = await _controller.Login(new LoginDto { CompanyId = 1 });
+
+        Assert.IsType<UnauthorizedObjectResult>(response);
+        _mockUserService.Verify(us => us.GetUserByFirebaseIdAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsNotFound_WhenUserMissing()
+    {
+        var user = BuildUser(firebaseUid: "uid-1");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = user }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync((User?)null);
+
+        var response = await _controller.Login(new LoginDto { CompanyId = 1 });
+
+        Assert.IsType<NotFoundObjectResult>(response);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsBadRequest_WhenCompanyMismatch()
+    {
+        var userClaims = BuildUser(firebaseUid: "uid-1");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = userClaims }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync(new User { Id = 2, FirebaseId = "uid-1", CompanyId = 10, Email = "test@example.com", UserName = "u" });
+
+        var response = await _controller.Login(new LoginDto { CompanyId = 3 });
+
+        Assert.IsType<BadRequestObjectResult>(response);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsOk_WhenCompanyMatches()
+    {
+        var principal = BuildUser(firebaseUid: "uid-1");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync(new User
+            {
+                Id = 5,
+                FirebaseId = "uid-1",
+                CompanyId = 7,
+                Email = "ok@example.com",
+                UserName = "ok",
+                FirstName = "Ok",
+                LastName = "User",
+                Role = UserRole.Employee,
+                Company = new Company { Id = 7, Name = "Comp" }
+            });
+
+        var response = await _controller.Login(new LoginDto { CompanyId = 7 });
+
+        var ok = Assert.IsType<OkObjectResult>(response);
+        Assert.NotNull(ok.Value);
+    }
+
+    [Fact]
+    public async Task Register_ReturnsUnauthorized_WhenFirebaseUidMissing()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = BuildUser() }
+        };
+
+        var response = await _controller.Register(new RegisterUserDto
+        {
+            FirstName = "A",
+            LastName = "B",
+            UserName = "u",
+            CompanyId = 1
+        });
+
+        Assert.IsType<UnauthorizedObjectResult>(response);
+        _mockUserService.Verify(us => us.GetUserByFirebaseIdAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Register_ReturnsConflict_WhenUserAlreadyExists()
+    {
+        var principal = BuildUser(firebaseUid: "uid-1", email: "conflict@example.com");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync(new User { Id = 10, FirebaseId = "uid-1" });
+
+        var response = await _controller.Register(new RegisterUserDto
+        {
+            FirstName = "A",
+            LastName = "B",
+            UserName = "u",
+            CompanyId = 2
+        });
+
+        Assert.IsType<ConflictObjectResult>(response);
+    }
+
+    [Fact]
+    public async Task Register_JoinsExistingCompany_WhenCompanyIdProvided()
+    {
+        var principal = BuildUser(firebaseUid: "uid-1", email: "join@example.com");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync((User?)null);
+
+        _mockCompanyService.Setup(cs => cs.GetCompanyByIdAsync(5))
+            .ReturnsAsync(new Company { Id = 5, Name = "Existing" });
+
+        _mockUserService.Setup(us => us.CreateUserAsync(It.IsAny<User>()))
+            .ReturnsAsync((User u) => { u.Id = 99; return u; });
+
+        var response = await _controller.Register(new RegisterUserDto
+        {
+            FirstName = "A",
+            LastName = "B",
+            UserName = "u",
+            CompanyId = 5
+        });
+
+        Assert.IsType<CreatedAtActionResult>(response);
+    }
+
+    [Fact]
+    public async Task Register_CreatesCompany_WhenCompanyNameProvided()
+    {
+        var principal = BuildUser(firebaseUid: "uid-2", email: "new@example.com");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-2"))
+            .ReturnsAsync((User?)null);
+
+        _mockCompanyService.Setup(cs => cs.CreateCompanyAsync(It.IsAny<Company>()))
+            .ReturnsAsync(new Company { Id = 11, Name = "NewCo" });
+
+        _mockUserService.Setup(us => us.CreateUserAsync(It.IsAny<User>()))
+            .ReturnsAsync((User u) => { u.Id = 77; return u; });
+
+        var response = await _controller.Register(new RegisterUserDto
+        {
+            FirstName = "A",
+            LastName = "B",
+            UserName = "u",
+            CompanyName = "NewCo"
+        });
+
+        Assert.IsType<CreatedAtActionResult>(response);
+    }
+
+    private static ClaimsPrincipal BuildUser(string? firebaseUid = null, string? email = null)
+    {
+        var claims = new List<Claim>();
+        if (!string.IsNullOrWhiteSpace(firebaseUid))
+        {
+            claims.Add(new Claim("FirebaseUid", firebaseUid));
+        }
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            claims.Add(new Claim(ClaimTypes.Email, email));
+        }
+
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        return new ClaimsPrincipal(identity);
     }
 }
