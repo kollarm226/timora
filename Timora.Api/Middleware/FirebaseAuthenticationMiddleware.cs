@@ -49,12 +49,66 @@ namespace Timora.Api.Middleware
 
                 if (firebaseUser != null)
                 {
+                   // Log Firebase user info for debugging
+                   _logger.LogInformation(
+                       "Processing Firebase token for UID: {FirebaseUid}, Email: {Email}",
+                       firebaseUser.Uid,
+                       firebaseUser.Email ?? "N/A"
+                   );
+
                     // Find matching user in the database by Firebase UID
                     try
                     {
+                       // CRITICAL: AsNoTracking() prevents EF Core from caching query results
                         var user = await dbContext
-                            .Users.Include(u => u.Company)
+                           .Users
+                           .AsNoTracking()
+                           .Include(u => u.Company)
                             .FirstOrDefaultAsync(u => u.FirebaseId == firebaseUser.Uid);
+
+                       // FALLBACK: If user not found by FirebaseId, try to find by email (for old users)
+                       if (user == null && !string.IsNullOrEmpty(firebaseUser.Email))
+                       {
+                           _logger.LogWarning(
+                               "User not found by FirebaseId {FirebaseUid}, trying fallback by email {Email}",
+                               firebaseUser.Uid,
+                               firebaseUser.Email
+                           );
+
+                           user = await dbContext
+                               .Users
+                               .AsNoTracking()
+                               .Include(u => u.Company)
+                               .FirstOrDefaultAsync(u => u.Email == firebaseUser.Email);
+
+                           // If found by email, update the FirebaseId in database
+                           if (user != null)
+                           {
+                               _logger.LogInformation(
+                                   "Found user by email, updating FirebaseId for UserId={UserId}",
+                                   user.Id
+                               );
+
+                               var userToUpdate = await dbContext.Users.FindAsync(user.Id);
+                               if (userToUpdate != null)
+                               {
+                                   userToUpdate.FirebaseId = firebaseUser.Uid;
+                                   await dbContext.SaveChangesAsync();
+                                   _logger.LogInformation(
+                                       "Updated FirebaseId for UserId={UserId}, Email={Email}",
+                                       user.Id,
+                                       user.Email
+                                   );
+                               }
+                           }
+                       }
+
+                       _logger.LogInformation(
+                           "Database lookup result: Found={Found}, UserId={UserId}, Email={Email}",
+                           user != null,
+                           user?.Id ?? 0,
+                           user?.Email ?? "N/A"
+                       );
 
                         if (user != null)
                         {
