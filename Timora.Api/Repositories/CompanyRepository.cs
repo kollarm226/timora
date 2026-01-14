@@ -28,7 +28,7 @@ namespace Timora.Api.Repositories
         /// <returns>A collection of all companies.</returns>
         public async Task<IEnumerable<Company>> GetAllCompaniesAsync()
         {
-            return await _context.Companies.Include(c => c.Users).ToListAsync();
+            return await _context.Companies.AsNoTracking().Include(c => c.Users).ToListAsync();
         }
 
         /// <summary>
@@ -38,8 +38,9 @@ namespace Timora.Api.Repositories
         /// <returns>The company if found; otherwise, null.</returns>
         public async Task<Company?> GetCompanyByIdAsync(int id)
         {
-            return await _context
-                .Companies.Include(c => c.Users)
+            return await _context.Companies
+                .AsNoTracking()
+                .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 

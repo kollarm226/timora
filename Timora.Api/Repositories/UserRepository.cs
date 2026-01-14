@@ -28,7 +28,7 @@ namespace Timora.Api.Repositories
         /// <returns>A collection of all users.</returns>
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _context.Users.Include(u => u.Company).ToListAsync();
+            return await _context.Users.AsNoTracking().Include(u => u.Company).ToListAsync();
         }
 
         /// <summary>
@@ -38,8 +38,9 @@ namespace Timora.Api.Repositories
         /// <returns>The user if found; otherwise, null.</returns>
         public async Task<User?> GetUserByIdAsync(int id)
         {
-            return await _context
-                .Users.Include(u => u.Company)
+            return await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
@@ -50,8 +51,9 @@ namespace Timora.Api.Repositories
         /// <returns>The user if found; otherwise, null.</returns>
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context
-                .Users.Include(u => u.Company)
+            return await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
@@ -62,8 +64,9 @@ namespace Timora.Api.Repositories
         /// <returns>The user if found; otherwise, null.</returns>
         public async Task<User?> GetUserByFirebaseIdAsync(string firebaseId)
         {
-            return await _context
-                .Users.Include(u => u.Company)
+            return await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.FirebaseId == firebaseId);
         }
 
