@@ -28,9 +28,8 @@ namespace Timora.Api.Repositories
         /// <returns>A collection of all holiday requests.</returns>
         public async Task<IEnumerable<HolidayRequest>> GetAllHolidayRequestsAsync()
         {
-            return await _context.HolidayRequests
-                .AsNoTracking()
-                .Include(hr => hr.User)
+            return await _context
+                .HolidayRequests.Include(hr => hr.User)
                 .Include(hr => hr.ResolvedBy)
                 .ToListAsync();
         }
@@ -42,9 +41,8 @@ namespace Timora.Api.Repositories
         /// <returns>The holiday request if found; otherwise, null.</returns>
         public async Task<HolidayRequest?> GetHolidayRequestByIdAsync(int id)
         {
-            return await _context.HolidayRequests
-                .AsNoTracking()
-                .Include(hr => hr.User)
+            return await _context
+                .HolidayRequests.Include(hr => hr.User)
                 .Include(hr => hr.ResolvedBy)
                 .FirstOrDefaultAsync(hr => hr.Id == id);
         }
