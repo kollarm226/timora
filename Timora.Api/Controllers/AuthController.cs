@@ -77,6 +77,81 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Validates login credentials against a specific company.
+    /// User must be authenticated via Firebase AND must belong to the specified company.
+    /// This endpoint ensures that a user cannot login with a wrong company ID.
+    /// </summary>
+    /// <param name="loginDto">The login data with companyId validation.</param>
+    /// <returns>The authenticated user's profile with correct company information.</returns>
+    /// <response code="200">Returns the authenticated user with their correct company details.</response>
+    /// <response code="400">If user is not in the specified company.</response>
+    /// <response code="401">If the user is not authenticated with Firebase.</response>
+    /// <response code="404">If user is not found in database.</response>
+    [HttpPost("login")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    {
+        var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
+        var userCompanyIdClaim = User.FindFirst("CompanyId")?.Value;
+
+        if (string.IsNullOrEmpty(firebaseUid))
+        {
+            _logger.LogWarning("Login attempt without proper Firebase authentication");
+            return Unauthorized(new { message = "Invalid authentication. Firebase UID not found in token." });
+        }
+
+        // Parse the company ID from claims
+        if (!int.TryParse(userCompanyIdClaim, out int userActualCompanyId))
+        {
+            _logger.LogWarning("Invalid CompanyId claim for user {FirebaseUid}", firebaseUid);
+            return BadRequest(new { message = "Invalid company information in user profile." });
+        }
+
+        // CRITICAL: Check if the company ID from the request matches the user's actual company
+        if (loginDto.CompanyId != userActualCompanyId)
+        {
+            _logger.LogWarning(
+                "User {FirebaseUid} attempted to login with wrong company. Claimed: {ClaimedCompanyId}, Actual: {ActualCompanyId}",
+                firebaseUid,
+                loginDto.CompanyId,
+                userActualCompanyId
+            );
+            return BadRequest(new { message = $"Invalid company ID. You are registered in company {userActualCompanyId}, not company {loginDto.CompanyId}." });
+        }
+
+        // Fetch full user data from database
+        var user = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+        if (user == null)
+        {
+            _logger.LogWarning("User with Firebase UID {FirebaseUid} not found in database after successful login validation", firebaseUid);
+            return NotFound(new { message = "User not found." });
+        }
+
+        _logger.LogInformation(
+            "User {UserId} ({Email}) successfully logged in to company {CompanyId}",
+            user.Id,
+            user.Email,
+            user.CompanyId
+        );
+
+        return Ok(new
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            UserName = user.UserName,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role.ToString(),
+            CompanyId = user.CompanyId,
+            CompanyName = user.Company?.Name
+        });
+    }
+
+    /// <summary>
     /// Registers a new user after Firebase authentication.
     /// User can either join an existing company (as Employee) or create a new company (as Employer).
     /// </summary>
