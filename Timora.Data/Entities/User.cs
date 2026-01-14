@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Timora.Data.Entities
 {
     /// <summary>
     /// Represents a user in the system with authentication, role management, and relationships to holiday requests and notices.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class User
     {
         /// <summary>

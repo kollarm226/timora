@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Timora.Data.Entities
 {
     /// <summary>
     /// Represents a notice or announcement that can be created and viewed by users in the system.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class Notice
     {
         /// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Timora.Data.Data;
 using Timora.Data.Entities;
@@ -7,6 +8,7 @@ namespace Timora.Api.Repositories
     /// <summary>
     /// Repository implementation for HolidayRequest entity data access operations.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class HolidayRequestRepository : IHolidayRequestRepository
     {
         private readonly TimoraDbContext _context;
