@@ -59,14 +59,12 @@ namespace Timora.Api.Middleware
                     // Find matching user in the database by Firebase UID
                     try
                     {
-                       // CRITICAL: AsNoTracking() prevents EF Core from caching query results
                         var user = await dbContext
                            .Users
                            .AsNoTracking()
                            .Include(u => u.Company)
                             .FirstOrDefaultAsync(u => u.FirebaseId == firebaseUser.Uid);
 
-                       // FALLBACK: If user not found by FirebaseId, try to find by email (for old users)
                        if (user == null && !string.IsNullOrEmpty(firebaseUser.Email))
                        {
                            _logger.LogWarning(
@@ -77,30 +75,90 @@ namespace Timora.Api.Middleware
 
                            user = await dbContext
                                .Users
-                               .AsNoTracking()
                                .Include(u => u.Company)
                                .FirstOrDefaultAsync(u => u.Email == firebaseUser.Email);
 
-                           // If found by email, update the FirebaseId in database
+                           // Handle the case where user exists but may have NULL or different FirebaseId
                            if (user != null)
                            {
-                               _logger.LogInformation(
-                                   "Found user by email, updating FirebaseId for UserId={UserId}",
-                                   user.Id
-                               );
-
-                               var userToUpdate = await dbContext.Users.FindAsync(user.Id);
-                               if (userToUpdate != null)
+                               // Case 1: User has NULL FirebaseId
+                               if (string.IsNullOrEmpty(user.FirebaseId))
                                {
-                                   userToUpdate.FirebaseId = firebaseUser.Uid;
-                                   await dbContext.SaveChangesAsync();
                                    _logger.LogInformation(
-                                       "Updated FirebaseId for UserId={UserId}, Email={Email}",
+                                       "Found user by email with NULL FirebaseId. Updating for UserId={UserId}, Email={Email}",
+                                       user.Id,
+                                       user.Email
+                                   );
+
+                                   user.FirebaseId = firebaseUser.Uid;
+                                   await dbContext.SaveChangesAsync();
+
+                                   _logger.LogInformation(
+                                       "Successfully updated FirebaseId for UserId={UserId}, Email={Email}, NewFirebaseUid={FirebaseUid}",
+                                       user.Id,
+                                       user.Email,
+                                       firebaseUser.Uid
+                                   );
+                               }
+                               // Case 2: User has different FirebaseId
+                               else if (user.FirebaseId != firebaseUser.Uid)
+                               {
+                                   _logger.LogWarning(
+                                       "SECURITY: User {UserId} ({Email}) has mismatched FirebaseId. " +
+                                       "DB FirebaseId={DBFirebaseId}, Current Token UID={FirebaseUid}. " +
+                                       "NOT updating (user may have multiple Firebase accounts). Rejecting login.",
+                                       user.Id,
+                                       user.Email,
+                                       user.FirebaseId,
+                                       firebaseUser.Uid
+                                   );
+
+                                   user = null;
+                               }
+                               else
+                               {
+                                   // Case 3: FirebaseIds match
+                                   _logger.LogInformation(
+                                       "User found by email with matching FirebaseId. UserId={UserId}, Email={Email}",
                                        user.Id,
                                        user.Email
                                    );
                                }
                            }
+
+                           // If user was found and potentially updated, re-query for claims
+                           if (user != null)
+                           {
+                               user = await dbContext
+                                   .Users
+                                   .AsNoTracking()
+                                   .Include(u => u.Company)
+                                   .FirstOrDefaultAsync(u => u.Id == user.Id);
+                           }
+                       }
+
+                       // Debug: If user still not found, log all users with this email
+                       if (user == null && !string.IsNullOrEmpty(firebaseUser.Email))
+                       {
+                           _logger.LogWarning(
+                               "User not found by either FirebaseId or Email. Firebase UID: {FirebaseUid}, Email: {Email}. " +
+                               "Checking if user exists in database at all...",
+                               firebaseUser.Uid,
+                               firebaseUser.Email
+                           );
+
+                           // Debug: Check all users with this email
+                           var allUsersWithEmail = await dbContext.Users
+                               .Where(u => u.Email == firebaseUser.Email)
+                               .Select(u => new { u.Id, u.Email, u.FirebaseId })
+                               .ToListAsync();
+
+                           _logger.LogWarning(
+                               "Database check result - Users with email {Email}: {Count} users found. Details: {Details}",
+                               firebaseUser.Email,
+                               allUsersWithEmail.Count,
+                               string.Join("; ", allUsersWithEmail.Select(u => $"Id={u.Id}, FirebaseId={u.FirebaseId ?? "NULL"}"))
+                           );
                        }
 
                        _logger.LogInformation(
@@ -157,7 +215,6 @@ namespace Timora.Api.Middleware
                             );
 
                             // Set minimal claims for unregistered Firebase users
-                            // This allows them to access the registration endpoint
                             var minimalClaims = new List<Claim>
                             {
                                 new("FirebaseUid", firebaseUser.Uid),
@@ -172,7 +229,6 @@ namespace Timora.Api.Middleware
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Failed to enrich user from DB for Firebase UID {FirebaseUid}. Continuing without DB enrichment.", firebaseUser.Uid);
-                        // Leave context.User as set by JWT Bearer if present
                     }
                 }
             }

@@ -39,15 +39,16 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Gets the current authenticated user's information from claims.
+    /// Includes fallback logic to retrieve user data from database if claims are incomplete.
     /// </summary>
-    /// <returns>User data extracted from the Firebase authentication token.</returns>
+    /// <returns>User data extracted from the Firebase authentication token and/or database.</returns>
     /// <response code="200">Returns the authenticated user's claims and profile data.</response>
     /// <response code="401">If the user is not authenticated or token is invalid.</response>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
@@ -58,7 +59,45 @@ public class AuthController : ControllerBase
         var companyId = User.FindFirst("CompanyId")?.Value;
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
 
-        _logger.LogInformation("User {UserId} accessed /api/auth/me endpoint", userId);
+        _logger.LogInformation(
+            "User accessed /api/auth/me endpoint. UserId={UserId}, Email={Email}, FirebaseUid={FirebaseUid}",
+            userId ?? "MISSING",
+            email ?? "MISSING",
+            firebaseUid ?? "MISSING"
+        );
+
+        // FALLBACK: If critical data is missing from claims, try to retrieve from database
+        if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
+        {
+            _logger.LogWarning(
+                "GetCurrentUser: Missing UserId in claims, attempting fallback lookup by email {Email}",
+                email
+            );
+
+            var userFromDb = await _userService.GetUserByEmailAsync(email);
+            if (userFromDb != null)
+            {
+                userId = userFromDb.Id.ToString();
+                userName = userFromDb.UserName;
+                firstName = userFromDb.FirstName;
+                lastName = userFromDb.LastName;
+                role = userFromDb.Role.ToString();
+                companyId = userFromDb.CompanyId.ToString();
+
+                _logger.LogInformation(
+                    "Fallback: Successfully retrieved user data from database. UserId={UserId}, Email={Email}",
+                    userId,
+                    email
+                );
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Fallback: User with email {Email} not found in database despite Firebase authentication",
+                    email
+                );
+            }
+        }
 
         return Ok(
             new

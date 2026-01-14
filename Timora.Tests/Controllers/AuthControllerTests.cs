@@ -36,7 +36,7 @@ public class AuthControllerTests
     /// Tests that GetCurrentUser returns OK with user claims when authenticated.
     /// </summary>
     [Fact]
-    public void GetCurrentUser_ReturnsOk_WithUserClaims()
+    public async Task GetCurrentUser_ReturnsOk_WithUserClaims()
     {
         // Arrange
         var claims = new List<Claim>
@@ -60,7 +60,7 @@ public class AuthControllerTests
         };
 
         // Act
-        var result = _controller.GetCurrentUser();
+        var result = await _controller.GetCurrentUser();
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -71,7 +71,7 @@ public class AuthControllerTests
     /// Tests that GetCurrentUser returns OK even when claims are missing (nulls are allowed).
     /// </summary>
     [Fact]
-    public void GetCurrentUser_ReturnsOk_WhenClaimsAreMissing()
+    public async Task GetCurrentUser_ReturnsOk_WhenClaimsAreMissing()
     {
         // Arrange
         var claims = new List<Claim>();
@@ -84,7 +84,7 @@ public class AuthControllerTests
         };
 
         // Act
-        var result = _controller.GetCurrentUser();
+        var result = await _controller.GetCurrentUser();
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
