@@ -28,9 +28,8 @@ namespace Timora.Api.Repositories
         /// <returns>A collection of all notices.</returns>
         public async Task<IEnumerable<Notice>> GetAllNoticesAsync()
         {
-            return await _context.Notices
-                .AsNoTracking()
-                .Include(n => n.User)
+            return await _context
+                .Notices.Include(n => n.User)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
@@ -42,10 +41,7 @@ namespace Timora.Api.Repositories
         /// <returns>The notice if found; otherwise, null.</returns>
         public async Task<Notice?> GetNoticeByIdAsync(int id)
         {
-            return await _context.Notices
-                .AsNoTracking()
-                .Include(n => n.User)
-                .FirstOrDefaultAsync(n => n.Id == id);
+            return await _context.Notices.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == id);
         }
 
         /// <summary>
