@@ -96,7 +96,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
-        var userCompanyIdClaim = User.FindFirst("CompanyId")?.Value;
 
         if (string.IsNullOrEmpty(firebaseUid))
         {
@@ -104,31 +103,24 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid authentication. Firebase UID not found in token." });
         }
 
-        // Parse the company ID from claims
-        if (!int.TryParse(userCompanyIdClaim, out int userActualCompanyId))
+        // Fetch user from database - this is the source of truth
+        var user = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+        if (user == null)
         {
-            _logger.LogWarning("Invalid CompanyId claim for user {FirebaseUid}", firebaseUid);
-            return BadRequest(new { message = "Invalid company information in user profile." });
+            _logger.LogWarning("User with Firebase UID {FirebaseUid} not found in database. User needs to register first.", firebaseUid);
+            return NotFound(new { message = "User not found. Please register first." });
         }
 
         // CRITICAL: Check if the company ID from the request matches the user's actual company
-        if (loginDto.CompanyId != userActualCompanyId)
+        if (loginDto.CompanyId != user.CompanyId)
         {
             _logger.LogWarning(
                 "User {FirebaseUid} attempted to login with wrong company. Claimed: {ClaimedCompanyId}, Actual: {ActualCompanyId}",
                 firebaseUid,
                 loginDto.CompanyId,
-                userActualCompanyId
+                user.CompanyId
             );
-            return BadRequest(new { message = $"Invalid company ID. You are registered in company {userActualCompanyId}, not company {loginDto.CompanyId}." });
-        }
-
-        // Fetch full user data from database
-        var user = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
-        if (user == null)
-        {
-            _logger.LogWarning("User with Firebase UID {FirebaseUid} not found in database after successful login validation", firebaseUid);
-            return NotFound(new { message = "User not found." });
+            return BadRequest(new { message = $"Invalid company ID. You are registered in company {user.CompanyId}, not company {loginDto.CompanyId}." });
         }
 
         _logger.LogInformation(
