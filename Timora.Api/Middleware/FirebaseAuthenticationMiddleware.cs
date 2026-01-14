@@ -1,8 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
+using Timora.Api.Repositories;
 using Timora.Api.Services;
-using Timora.Data.Data;
 
 namespace Timora.Api.Middleware
 {
@@ -33,7 +32,7 @@ namespace Timora.Api.Middleware
         public async Task InvokeAsync(
             HttpContext context,
             FirebaseAuthService firebaseAuthService,
-            TimoraDbContext dbContext
+            IUserRepository userRepository
         )
         {
             var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
@@ -52,9 +51,7 @@ namespace Timora.Api.Middleware
                     // Find matching user in the database by Firebase UID
                     try
                     {
-                        var user = await dbContext
-                            .Users.Include(u => u.Company)
-                            .FirstOrDefaultAsync(u => u.FirebaseId == firebaseUser.Uid);
+                        var user = await userRepository.GetUserByFirebaseIdAsync(firebaseUser.Uid);
 
                         if (user != null)
                         {
