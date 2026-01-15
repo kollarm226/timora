@@ -205,6 +205,7 @@ public class AuthControllerTests
             FirstName = "A",
             LastName = "B",
             UserName = "u",
+            Email = "conflict@example.com",
             CompanyId = 2
         });
 
@@ -223,6 +224,9 @@ public class AuthControllerTests
         _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
             .ReturnsAsync((User?)null);
 
+        _mockUserService.Setup(us => us.GetUserByEmailAsync("join@example.com"))
+            .ReturnsAsync((User?)null);
+
         _mockCompanyService.Setup(cs => cs.GetCompanyByIdAsync(5))
             .ReturnsAsync(new Company { Id = 5, Name = "Existing" });
 
@@ -234,6 +238,7 @@ public class AuthControllerTests
             FirstName = "A",
             LastName = "B",
             UserName = "u",
+            Email = "join@example.com",
             CompanyId = 5
         });
 
@@ -252,6 +257,9 @@ public class AuthControllerTests
         _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-2"))
             .ReturnsAsync((User?)null);
 
+        _mockUserService.Setup(us => us.GetUserByEmailAsync("new@example.com"))
+            .ReturnsAsync((User?)null);
+
         _mockCompanyService.Setup(cs => cs.CreateCompanyAsync(It.IsAny<Company>()))
             .ReturnsAsync(new Company { Id = 11, Name = "NewCo" });
 
@@ -263,6 +271,7 @@ public class AuthControllerTests
             FirstName = "A",
             LastName = "B",
             UserName = "u",
+            Email = "new@example.com",
             CompanyName = "NewCo"
         });
 
