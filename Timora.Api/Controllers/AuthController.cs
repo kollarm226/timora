@@ -143,14 +143,13 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Validates login credentials against a specific company.
-    /// User must be authenticated via Firebase AND must belong to the specified company.
-    /// This endpoint ensures that a user cannot login with a wrong company ID.
+    /// Validates login credentials for a Firebase-authenticated user.
+    /// Ensures the user exists in the database and is assigned to a company.
     /// </summary>
-    /// <param name="loginDto">The login data with companyId validation.</param>
-    /// <returns>The authenticated user's profile with correct company information.</returns>
-    /// <response code="200">Returns the authenticated user with their correct company details.</response>
-    /// <response code="400">If user is not in the specified company.</response>
+    /// <param name="loginDto">The login data.</param>
+    /// <returns>The authenticated user's profile with company information.</returns>
+    /// <response code="200">Returns the authenticated user with their company details.</response>
+    /// <response code="400">If user is not assigned to any company.</response>
     /// <response code="401">If the user is not authenticated with Firebase.</response>
     /// <response code="404">If user is not found in database.</response>
     [HttpPost("login")]
@@ -177,16 +176,14 @@ public class AuthController : ControllerBase
             return NotFound(new { message = "User not found. Please register first." });
         }
 
-        // CRITICAL: Check if the company ID from the request matches the user's actual company
-        if (loginDto.CompanyId != user.CompanyId)
+        // Ensure user is assigned to a company
+        if (user.CompanyId <= 0)
         {
             _logger.LogWarning(
-                "User {FirebaseUid} attempted to login with wrong company. Claimed: {ClaimedCompanyId}, Actual: {ActualCompanyId}",
-                firebaseUid,
-                loginDto.CompanyId,
-                user.CompanyId
+                "User {FirebaseUid} attempted to login but is not assigned to any company.",
+                firebaseUid
             );
-            return BadRequest(new { message = $"Invalid company ID. You are registered in company {user.CompanyId}, not company {loginDto.CompanyId}." });
+            return BadRequest(new { message = "User is not assigned to any company." });
         }
 
         _logger.LogInformation(
