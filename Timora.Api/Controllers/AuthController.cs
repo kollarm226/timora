@@ -227,9 +227,8 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
     {
-        // Extract Firebase UID and email from claims (set by middleware)
+        // Extract Firebase UID from claims (set by middleware)
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrEmpty(firebaseUid))
         {
@@ -237,12 +236,20 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid authentication. Firebase UID not found in token." });
         }
 
-        // Check if user already exists
+        // Check if user already exists by Firebase UID
         var existingUser = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
         if (existingUser != null)
         {
             _logger.LogWarning("User with Firebase UID {FirebaseUid} attempted to register but already exists", firebaseUid);
             return Conflict(new { message = "User is already registered.", userId = existingUser.Id });
+        }
+
+        // Check if email from form already exists in database
+        var userByEmail = await _userService.GetUserByEmailAsync(registerDto.Email);
+        if (userByEmail != null)
+        {
+            _logger.LogWarning("Registration attempt with already registered email {Email}", registerDto.Email);
+            return Conflict(new { message = "Email is already registered." });
         }
 
         int companyId;
@@ -306,7 +313,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             FirebaseId = firebaseUid,
-            Email = email ?? $"{firebaseUid}@unknown.com",
+            Email = registerDto.Email.Trim(),
             FirstName = registerDto.FirstName.Trim(),
             LastName = registerDto.LastName.Trim(),
             UserName = registerDto.UserName.Trim(),

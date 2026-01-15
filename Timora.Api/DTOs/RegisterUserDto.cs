@@ -45,6 +45,15 @@ namespace Timora.Api.DTOs
         public string UserName { get; set; } = null!;
 
         /// <summary>
+        /// Gets or sets the user's email address.
+        /// This is the email that will be stored in the database (can differ from Firebase email).
+        /// </summary>
+        [Required]
+        [MaxLength(200)]
+        [EmailAddress]
+        public string Email { get; set; } = null!;
+
+        /// <summary>
         /// Validates that either CompanyId or CompanyName is provided, but not both.
         /// </summary>
         /// <param name="validationContext">The validation context.</param>
