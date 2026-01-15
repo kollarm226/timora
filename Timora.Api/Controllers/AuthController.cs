@@ -76,29 +76,29 @@ public class AuthController : ControllerBase
         {
             User? userFromDb = null;
 
-            // Primary lookup: Use FirebaseUid (most reliable identifier)
-            if (!string.IsNullOrEmpty(firebaseUid))
+            // Primary lookup: Use Email
+            if (!string.IsNullOrEmpty(email))
             {
                 _logger.LogWarning(
-                    "GetCurrentUser: Incomplete profile data in claims (UserId={UserId}, FirstName={FirstName}, LastName={LastName}), attempting fallback lookup by FirebaseUid {FirebaseUid}",
+                    "GetCurrentUser: Incomplete profile data in claims (UserId={UserId}, FirstName={FirstName}, LastName={LastName}), attempting fallback lookup by Email {Email}",
                     userId ?? "MISSING",
                     firstName ?? "MISSING",
                     lastName ?? "MISSING",
-                    firebaseUid
-                );
-
-                userFromDb = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
-            }
-
-            // Secondary lookup: Fall back to email if FirebaseUid lookup failed
-            if (userFromDb == null && !string.IsNullOrEmpty(email))
-            {
-                _logger.LogWarning(
-                    "GetCurrentUser: FirebaseUid lookup failed or unavailable, attempting fallback lookup by email {Email}",
                     email
                 );
 
                 userFromDb = await _userService.GetUserByEmailAsync(email);
+            }
+
+            // Secondary lookup: Fall back to FirebaseUid if email lookup failed
+            if (userFromDb == null && !string.IsNullOrEmpty(firebaseUid))
+            {
+                _logger.LogWarning(
+                    "GetCurrentUser: Email lookup failed or unavailable, attempting fallback lookup by FirebaseUid {FirebaseUid}",
+                    firebaseUid
+                );
+
+                userFromDb = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
             }
 
             if (userFromDb != null)
@@ -161,18 +161,28 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-        if (string.IsNullOrEmpty(firebaseUid))
+        if (string.IsNullOrEmpty(firebaseUid) && string.IsNullOrEmpty(email))
         {
             _logger.LogWarning("Login attempt without proper Firebase authentication");
-            return Unauthorized(new { message = "Invalid authentication. Firebase UID not found in token." });
+            return Unauthorized(new { message = "Invalid authentication. Firebase UID or email not found in token." });
         }
 
-        // Fetch user from database - this is the source of truth
-        var user = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+        // Primary lookup: Email (source of truth from Firebase token)
+        var user = !string.IsNullOrEmpty(email)
+            ? await _userService.GetUserByEmailAsync(email)
+            : null;
+
+        // Secondary lookup: FirebaseUid (fallback if email lookup failed)
+        if (user == null && !string.IsNullOrEmpty(firebaseUid))
+        {
+            user = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+        }
+
         if (user == null)
         {
-            _logger.LogWarning("User with Firebase UID {FirebaseUid} not found in database. User needs to register first.", firebaseUid);
+            _logger.LogWarning("User with Email {Email} / FirebaseUid {FirebaseUid} not found in database. User needs to register first.", email ?? "N/A", firebaseUid ?? "N/A");
             return NotFound(new { message = "User not found. Please register first." });
         }
 
