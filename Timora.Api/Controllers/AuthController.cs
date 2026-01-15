@@ -66,15 +66,41 @@ public class AuthController : ControllerBase
             firebaseUid ?? "MISSING"
         );
 
-        // FALLBACK: If critical data is missing from claims, try to retrieve from database
-        if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
-        {
-            _logger.LogWarning(
-                "GetCurrentUser: Missing UserId in claims, attempting fallback lookup by email {Email}",
-                email
-            );
+        // FALLBACK: If critical profile data is missing from claims, try to retrieve from database
+        // This handles cases where middleware couldn't find user or user has incomplete profile data
+        bool profileIncomplete = string.IsNullOrEmpty(userId) 
+                              || string.IsNullOrEmpty(firstName) 
+                              || string.IsNullOrEmpty(lastName);
 
-            var userFromDb = await _userService.GetUserByEmailAsync(email);
+        if (profileIncomplete)
+        {
+            User? userFromDb = null;
+
+            // Primary lookup: Use FirebaseUid (most reliable identifier)
+            if (!string.IsNullOrEmpty(firebaseUid))
+            {
+                _logger.LogWarning(
+                    "GetCurrentUser: Incomplete profile data in claims (UserId={UserId}, FirstName={FirstName}, LastName={LastName}), attempting fallback lookup by FirebaseUid {FirebaseUid}",
+                    userId ?? "MISSING",
+                    firstName ?? "MISSING",
+                    lastName ?? "MISSING",
+                    firebaseUid
+                );
+
+                userFromDb = await _userService.GetUserByFirebaseIdAsync(firebaseUid);
+            }
+
+            // Secondary lookup: Fall back to email if FirebaseUid lookup failed
+            if (userFromDb == null && !string.IsNullOrEmpty(email))
+            {
+                _logger.LogWarning(
+                    "GetCurrentUser: FirebaseUid lookup failed or unavailable, attempting fallback lookup by email {Email}",
+                    email
+                );
+
+                userFromDb = await _userService.GetUserByEmailAsync(email);
+            }
+
             if (userFromDb != null)
             {
                 userId = userFromDb.Id.ToString();
@@ -93,8 +119,9 @@ public class AuthController : ControllerBase
             else
             {
                 _logger.LogWarning(
-                    "Fallback: User with email {Email} not found in database despite Firebase authentication",
-                    email
+                    "Fallback: User not found in database despite Firebase authentication. FirebaseUid={FirebaseUid}, Email={Email}",
+                    firebaseUid ?? "MISSING",
+                    email ?? "MISSING"
                 );
             }
         }
