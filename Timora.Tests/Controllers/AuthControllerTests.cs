@@ -99,7 +99,7 @@ public class AuthControllerTests
             HttpContext = new DefaultHttpContext { User = BuildUser() }
         };
 
-        var response = await _controller.Login(new LoginDto { CompanyId = 1 });
+        var response = await _controller.Login(new LoginDto { Username = "u", Password = "p" });
 
         Assert.IsType<UnauthorizedObjectResult>(response);
         _mockUserService.Verify(us => us.GetUserByFirebaseIdAsync(It.IsAny<string>()), Times.Never);
@@ -117,13 +117,13 @@ public class AuthControllerTests
         _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
             .ReturnsAsync((User?)null);
 
-        var response = await _controller.Login(new LoginDto { CompanyId = 1 });
+        var response = await _controller.Login(new LoginDto { Username = "u", Password = "p" });
 
         Assert.IsType<NotFoundObjectResult>(response);
     }
 
     [Fact]
-    public async Task Login_ReturnsBadRequest_WhenCompanyMismatch()
+    public async Task Login_ReturnsBadRequest_WhenUserHasNoCompany()
     {
         var userClaims = BuildUser(firebaseUid: "uid-1");
         _controller.ControllerContext = new ControllerContext
@@ -132,9 +132,9 @@ public class AuthControllerTests
         };
 
         _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
-            .ReturnsAsync(new User { Id = 2, FirebaseId = "uid-1", CompanyId = 10, Email = "test@example.com", UserName = "u" });
+            .ReturnsAsync(new User { Id = 2, FirebaseId = "uid-1", CompanyId = 0, Email = "test@example.com", UserName = "u" });
 
-        var response = await _controller.Login(new LoginDto { CompanyId = 3 });
+        var response = await _controller.Login(new LoginDto { Username = "u", Password = "p" });
 
         Assert.IsType<BadRequestObjectResult>(response);
     }
@@ -162,7 +162,7 @@ public class AuthControllerTests
                 Company = new Company { Id = 7, Name = "Comp" }
             });
 
-        var response = await _controller.Login(new LoginDto { CompanyId = 7 });
+        var response = await _controller.Login(new LoginDto { Username = "ok", Password = "p" });
 
         var ok = Assert.IsType<OkObjectResult>(response);
         Assert.NotNull(ok.Value);

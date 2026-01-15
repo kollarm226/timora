@@ -5,17 +5,21 @@ namespace Timora.Api.DTOs;
 
 /// <summary>
 /// Data transfer object for login validation.
-/// Contains the company ID that the user claims to be logging into.
-/// Backend validates this against the user's actual company affiliation.
 /// </summary>
 [ExcludeFromCodeCoverage]
 public class LoginDto
 {
     /// <summary>
-    /// Gets or sets the company ID the user is attempting to log into.
-    /// Must match the user's actual company ID from the database.
+    /// Gets or sets the user's username.
     /// </summary>
     [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Company ID must be a positive number.")]
-    public int CompanyId { get; set; }
+    [MaxLength(50)]
+    public string Username { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the user's password.
+    /// </summary>
+    [Required]
+    [MaxLength(200)]
+    public string Password { get; set; } = null!;
 }
