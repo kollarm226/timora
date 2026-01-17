@@ -37,6 +37,11 @@ namespace Timora.Data.Data
         public DbSet<HolidayRequest> HolidayRequests { get; set; } = null!;
 
         /// <summary>
+        /// Gets or sets the Documents entity set for managing company documents.
+        /// </summary>
+        public DbSet<Document> Documents { get; set; } = null!;
+
+        /// <summary>
         /// Configures the model relationships, constraints, and database mappings using Fluent API.
         /// </summary>
         /// <param name="modelBuilder">The model builder used to configure the entities.</param>
@@ -48,6 +53,7 @@ namespace Timora.Data.Data
             ConfigureUserEntity(modelBuilder);
             ConfigureHolidayRequestEntity(modelBuilder);
             ConfigureNoticeEntity(modelBuilder);
+            ConfigureDocumentEntity(modelBuilder);
         }
 
         /// <summary>
@@ -156,6 +162,30 @@ namespace Timora.Data.Data
 
                 entity.HasIndex(n => n.UserId).HasDatabaseName("IX_Notices_UserId");
                 entity.HasIndex(n => n.CreatedAt).HasDatabaseName("IX_Notices_CreatedAt");
+            });
+        }
+
+        /// <summary>
+        /// Configures the Document entity with relationships and constraints.
+        /// </summary>
+        /// <param name="modelBuilder">The model builder used to configure the entity.</param>
+        private static void ConfigureDocumentEntity(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Document>(entity =>
+            {
+                entity.Property(d => d.Title).HasMaxLength(200).IsRequired();
+                entity.Property(d => d.Description).HasMaxLength(2000).IsRequired();
+                entity.Property(d => d.FileUrl).HasMaxLength(2000).IsRequired();
+
+                entity
+                    .HasOne(d => d.Company)
+                    .WithMany(c => c.Documents)
+                    .HasForeignKey(d => d.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Documents_Companies_CompanyId");
+
+                entity.HasIndex(d => d.CompanyId).HasDatabaseName("IX_Documents_CompanyId");
+                entity.HasIndex(d => d.CreatedAt).HasDatabaseName("IX_Documents_CreatedAt");
             });
         }
     }

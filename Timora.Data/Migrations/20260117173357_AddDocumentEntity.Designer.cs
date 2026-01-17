@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Timora.Data.Data;
 
@@ -10,9 +11,11 @@ using Timora.Data.Data;
 namespace Timora.Data.Migrations
 {
     [DbContext(typeof(TimoraDbContext))]
-    partial class TimoraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117173357_AddDocumentEntity")]
+    partial class AddDocumentEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
