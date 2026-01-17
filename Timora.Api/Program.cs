@@ -33,12 +33,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IHolidayRequestRepository, HolidayRequestRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<INoticeRepository, NoticeRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 // Register Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IHolidayRequestService, HolidayRequestService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<INoticeService, NoticeService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 
 var app = builder.Build();
 
