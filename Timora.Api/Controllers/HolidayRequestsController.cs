@@ -16,19 +16,23 @@ namespace Timora.Api.Controllers
     public class HolidayRequestsController : ControllerBase
     {
         private readonly IHolidayRequestService _holidayRequestService;
+        private readonly IEmailService _emailService;
         private readonly ILogger<HolidayRequestsController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the HolidayRequestsController.
         /// </summary>
         /// <param name="holidayRequestService">The holiday request service.</param>
+        /// <param name="emailService">The email service.</param>
         /// <param name="logger">The logger instance.</param>
         public HolidayRequestsController(
             IHolidayRequestService holidayRequestService,
+            IEmailService emailService,
             ILogger<HolidayRequestsController> logger
         )
         {
             _holidayRequestService = holidayRequestService;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -219,6 +223,10 @@ namespace Timora.Api.Controllers
 
             try
             {
+                // Get the existing request to check status change
+                var existingRequest = await _holidayRequestService.GetHolidayRequestByIdAsync(id);
+                var previousStatus = existingRequest?.Status;
+
                 var updatedHolidayRequest = await _holidayRequestService.UpdateHolidayRequestAsync(
                     id,
                     holidayRequest
@@ -228,6 +236,25 @@ namespace Timora.Api.Controllers
                 {
                     _logger.LogWarning("Holiday request with ID {HolidayRequestId} not found for update", id);
                     return NotFound(new { message = $"Holiday request with ID {id} not found" });
+                }
+
+                // Send email notification if status changed to Approved or Denied
+                if (updateHolidayRequestDto.Status.HasValue &&
+                    previousStatus == HolidayRequestStatus.Pending &&
+                    (updatedHolidayRequest.Status == HolidayRequestStatus.Approved ||
+                     updatedHolidayRequest.Status == HolidayRequestStatus.Denied))
+                {
+                    var user = updatedHolidayRequest.User;
+                    if (user != null)
+                    {
+                        await _emailService.SendHolidayRequestStatusEmailAsync(
+                            user.Email,
+                            $"{user.FirstName} {user.LastName}",
+                            updatedHolidayRequest.Status.ToString(),
+                            updatedHolidayRequest.StartDate,
+                            updatedHolidayRequest.EndDate,
+                            updatedHolidayRequest.ResolverComment);
+                    }
                 }
 
                 _logger.LogInformation(

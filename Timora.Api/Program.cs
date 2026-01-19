@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FirebaseAdmin;
+using Resend;
 using Timora.Api.Extensions;
 using Timora.Api.Repositories;
 using Timora.Api.Services;
@@ -41,6 +42,16 @@ builder.Services.AddScoped<IHolidayRequestService, HolidayRequestService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<INoticeService, NoticeService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+
+// Register Email Service
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(o =>
+{
+    o.ApiToken = builder.Configuration["Resend:ApiKey"]!;
+});
+builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
