@@ -19,9 +19,8 @@ namespace Timora.Api.DTOs
         /// <summary>
         /// Gets or sets the description of the document.
         /// </summary>
-        [Required]
         [MaxLength(2000)]
-        public string Description { get; set; } = null!;
+        public string Description { get; set; } = "";
 
         /// <summary>
         /// Gets or sets the URL where the document file is stored.
