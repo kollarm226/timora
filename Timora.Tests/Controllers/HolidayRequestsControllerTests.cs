@@ -14,14 +14,16 @@ namespace Timora.Tests.Controllers;
 public class HolidayRequestsControllerTests
 {
     private readonly Mock<IHolidayRequestService> _mockHolidayRequestService;
+    private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<ILogger<HolidayRequestsController>> _mockLogger;
     private readonly HolidayRequestsController _controller;
 
     public HolidayRequestsControllerTests()
     {
         _mockHolidayRequestService = new Mock<IHolidayRequestService>();
+        _mockEmailService = new Mock<IEmailService>();
         _mockLogger = new Mock<ILogger<HolidayRequestsController>>();
-        _controller = new HolidayRequestsController(_mockHolidayRequestService.Object, _mockLogger.Object);
+        _controller = new HolidayRequestsController(_mockHolidayRequestService.Object, _mockEmailService.Object, _mockLogger.Object);
     }
 
     #region GetAllHolidayRequests Tests
@@ -211,7 +213,9 @@ public class HolidayRequestsControllerTests
     {
         // Arrange
         var updateDto = new UpdateHolidayRequestDto { Status = HolidayRequestStatus.Approved };
+        var existingRequest = new HolidayRequest { Id = 1, UserId = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(5), Reason = "Vacation", Status = HolidayRequestStatus.Pending };
         var updatedRequest = new HolidayRequest { Id = 1, UserId = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(5), Reason = "Vacation", Status = HolidayRequestStatus.Approved };
+        _mockHolidayRequestService.Setup(s => s.GetHolidayRequestByIdAsync(1)).ReturnsAsync(existingRequest);
         _mockHolidayRequestService.Setup(s => s.UpdateHolidayRequestAsync(1, It.IsAny<HolidayRequest>())).ReturnsAsync(updatedRequest);
 
         // Act
@@ -251,6 +255,7 @@ public class HolidayRequestsControllerTests
     {
         // Arrange
         var updateDto = new UpdateHolidayRequestDto { Status = HolidayRequestStatus.Approved };
+        _mockHolidayRequestService.Setup(s => s.GetHolidayRequestByIdAsync(999)).ReturnsAsync((HolidayRequest?)null);
         _mockHolidayRequestService.Setup(s => s.UpdateHolidayRequestAsync(999, It.IsAny<HolidayRequest>())).ReturnsAsync((HolidayRequest?)null);
 
         // Act
@@ -268,6 +273,8 @@ public class HolidayRequestsControllerTests
     {
         // Arrange
         var updateDto = new UpdateHolidayRequestDto { Status = HolidayRequestStatus.Approved };
+        var existingRequest = new HolidayRequest { Id = 1, UserId = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(5), Reason = "Vacation", Status = HolidayRequestStatus.Pending };
+        _mockHolidayRequestService.Setup(s => s.GetHolidayRequestByIdAsync(1)).ReturnsAsync(existingRequest);
         _mockHolidayRequestService.Setup(s => s.UpdateHolidayRequestAsync(1, It.IsAny<HolidayRequest>()))
             .ThrowsAsync(new Exception("Database error"));
 
