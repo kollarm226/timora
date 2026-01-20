@@ -68,10 +68,10 @@ public class AuthControllerTests
     }
 
     /// <summary>
-    /// Tests that GetCurrentUser returns OK even when claims are missing (nulls are allowed).
+    /// Tests that GetCurrentUser returns NotFound when claims are missing and fallback lookup fails.
     /// </summary>
     [Fact]
-    public async Task GetCurrentUser_ReturnsOk_WhenClaimsAreMissing()
+    public async Task GetCurrentUser_ReturnsNotFound_WhenClaimsAreMissingAndFallbackFails()
     {
         // Arrange
         var claims = new List<Claim>();
@@ -86,9 +86,8 @@ public class AuthControllerTests
         // Act
         var result = await _controller.GetCurrentUser();
 
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.NotNull(okResult.Value);
+        // Assert - now returns NotFound when user can't be identified via claims or fallback
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
