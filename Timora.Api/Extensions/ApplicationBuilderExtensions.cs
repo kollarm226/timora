@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FirebaseAdmin;
 using Timora.Data.Data;
 
@@ -6,6 +7,7 @@ namespace Timora.Api.Extensions;
 /// <summary>
 /// Extension methods for configuring the application pipeline.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class ApplicationBuilderExtensions
 {
     /// <summary>

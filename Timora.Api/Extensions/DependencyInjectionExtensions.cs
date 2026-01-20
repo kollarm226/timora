@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Resend;
 using Timora.Api.Repositories;
 using Timora.Api.Services;
@@ -7,6 +8,7 @@ namespace Timora.Api.Extensions;
 /// <summary>
 /// Extension methods for registering application dependencies.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class DependencyInjectionExtensions
 {
     /// <summary>
