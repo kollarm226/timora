@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
         var companyId = User.FindFirst("CompanyId")?.Value;
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
-        var isApproved = User.FindFirst("IsApproved")?.Value;
+        var isApprovedString = User.FindFirst("IsApproved")?.Value;
         bool.TryParse(isApprovedString, out var isApproved);
 
         _logger.LogInformation(
@@ -111,6 +111,7 @@ public class AuthController : ControllerBase
                 lastName = userFromDb.LastName;
                 role = userFromDb.Role.ToString();
                 companyId = userFromDb.CompanyId.ToString();
+                isApproved = userFromDb.IsApproved;
 
                 _logger.LogInformation(
                     "Fallback: Successfully retrieved user data from database. UserId={UserId}, Email={Email}",
@@ -125,8 +126,8 @@ public class AuthController : ControllerBase
                     firebaseUid ?? "MISSING",
                     email ?? "MISSING"
                 );
+                return NotFound(new { message = "User not found" });
             }
-            return NotFound(new { message = "User not found" });
         }
 
         return Ok(
@@ -140,6 +141,7 @@ public class AuthController : ControllerBase
                 Role = role,
                 CompanyId = companyId,
                 FirebaseUid = firebaseUid,
+                IsApproved = isApproved,
                 AllClaims = User.Claims.Select(c => new { c.Type, c.Value }),
             }
         );
