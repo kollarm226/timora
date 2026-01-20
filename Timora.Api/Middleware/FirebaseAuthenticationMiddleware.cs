@@ -188,6 +188,7 @@ namespace Timora.Api.Middleware
                                 new("FirebaseUid", firebaseUser.Uid),
                                 new("CompanyId", user.CompanyId.ToString()),
                                 new(ClaimTypes.Role, user.Role.ToString()),
+                                new("IsApproved", user.IsApproved.ToString()),
                             };
 
                             // Add optional claims only when values are present to avoid ArgumentNullException

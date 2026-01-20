@@ -55,5 +55,20 @@ namespace Timora.Api.Services
         /// <param name="user">The user entity containing updated values.</param>
         /// <returns>The updated user if found; otherwise, null.</returns>
         Task<User?> UpdateUserAsync(int id, User user);
+
+        /// <summary>
+        /// Approves a user's registration request.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to approve.</param>
+        /// <param name="approverId">The unique identifier of the employer approving the user.</param>
+        /// <returns>The approved user if found; otherwise, null.</returns>
+        Task<User?> ApproveUserAsync(int userId, int approverId);
+
+        /// <summary>
+        /// Retrieves all users pending approval for a specific company.
+        /// </summary>
+        /// <param name="companyId">The unique identifier of the company.</param>
+        /// <returns>A collection of users pending approval.</returns>
+        Task<IEnumerable<User>> GetPendingUsersAsync(int companyId);
     }
 }

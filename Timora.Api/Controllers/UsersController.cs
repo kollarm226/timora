@@ -228,5 +228,117 @@ namespace Timora.Api.Controllers
                 return BadRequest(new { message = "Failed to update user", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Retrieves all users pending approval for a specific company.
+        /// </summary>
+        /// <param name="companyId">The company ID to filter pending users.</param>
+        /// <returns>A list of users pending approval.</returns>
+        /// <response code="200">Returns the list of pending users.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        [HttpGet("pending/{companyId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetPendingUsers(int companyId)
+        {
+            _logger.LogInformation("Fetching pending users for company {CompanyId}", companyId);
+            var pendingUsers = await _userService.GetPendingUsersAsync(companyId);
+            var response = pendingUsers.Select(UserResponseDto.FromUser);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Approves a user's registration request.
+        /// </summary>
+        /// <param name="id">The ID of the user to approve.</param>
+        /// <param name="approveDto">Optional approval details.</param>
+        /// <returns>The approved user.</returns>
+        /// <response code="200">Returns the approved user.</response>
+        /// <response code="400">If the approval fails.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the user is not found.</response>
+        [HttpPost("{id}/approve")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ApproveUser(int id, [FromBody] ApproveUserDto? approveDto)
+        {
+            _logger.LogInformation("Approving user with ID: {UserId}", id);
+
+            // Get current user ID from claims (the approver)
+            var approverIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(approverIdClaim, out var approverId))
+            {
+                // Fallback: try to get from email
+                var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    var approver = await _userService.GetUserByEmailAsync(email);
+                    if (approver != null)
+                    {
+                        approverId = approver.Id;
+                    }
+                }
+            }
+
+            try
+            {
+                var approvedUser = await _userService.ApproveUserAsync(id, approverId);
+
+                if (approvedUser == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found for approval", id);
+                    return NotFound(new { message = $"User with ID {id} not found" });
+                }
+
+                _logger.LogInformation("User with ID {UserId} approved successfully by {ApproverId}", id, approverId);
+                return Ok(UserResponseDto.FromUser(approvedUser));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving user with ID: {UserId}", id);
+                return BadRequest(new { message = "Failed to approve user", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Rejects and deletes a user's registration request.
+        /// </summary>
+        /// <param name="id">The ID of the user to reject.</param>
+        /// <param name="rejectDto">Optional rejection details.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="204">If the user was successfully rejected and deleted.</response>
+        /// <response code="400">If the rejection fails.</response>
+        /// <response code="401">If the user is not authenticated.</response>
+        /// <response code="404">If the user is not found.</response>
+        [HttpPost("{id}/reject")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RejectUser(int id, [FromBody] RejectUserDto? rejectDto)
+        {
+            _logger.LogInformation("Rejecting user with ID: {UserId}, Reason: {Reason}", id, rejectDto?.Reason ?? "No reason provided");
+
+            try
+            {
+                var result = await _userService.DeleteUserAsync(id);
+
+                if (!result)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found for rejection", id);
+                    return NotFound(new { message = $"User with ID {id} not found" });
+                }
+
+                _logger.LogInformation("User with ID {UserId} rejected and deleted successfully", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error rejecting user with ID: {UserId}", id);
+                return BadRequest(new { message = "Failed to reject user", error = ex.Message });
+            }
+        }
     }
 }

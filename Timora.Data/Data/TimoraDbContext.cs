@@ -103,6 +103,18 @@ namespace Timora.Data.Data
                     .IsUnique()
                     .HasDatabaseName("IX_Users_FirebaseId");
                 entity.HasIndex(u => u.CompanyId).HasDatabaseName("IX_Users_CompanyId");
+
+                // Approval workflow configuration
+                entity.Property(u => u.IsApproved).HasDefaultValue(true);
+
+                entity
+                    .HasOne(u => u.ApprovedByUser)
+                    .WithMany()
+                    .HasForeignKey(u => u.ApprovedBy)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("FK_Users_Users_ApprovedBy");
+
+                entity.HasIndex(u => u.IsApproved).HasDatabaseName("IX_Users_IsApproved");
             });
         }
 
