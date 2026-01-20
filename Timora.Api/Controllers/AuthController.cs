@@ -157,6 +157,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
@@ -196,6 +197,17 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "User is not assigned to any company." });
         }
 
+        // Check if user is approved
+        if (!user.IsApproved)
+        {
+            _logger.LogWarning(
+                "User {UserId} ({Email}) attempted to login but is pending approval.",
+                user.Id,
+                user.Email
+            );
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Your account is pending approval." });
+        }
+
         _logger.LogInformation(
             "User {UserId} ({Email}) successfully logged in to company {CompanyId}",
             user.Id,
@@ -212,7 +224,8 @@ public class AuthController : ControllerBase
             LastName = user.LastName,
             Role = user.Role.ToString(),
             CompanyId = user.CompanyId,
-            CompanyName = user.Company?.Name
+            CompanyName = user.Company?.Name,
+            IsApproved = user.IsApproved
         });
     }
 
@@ -304,7 +317,7 @@ public class AuthController : ControllerBase
             role = UserRole.Employee;
 
             _logger.LogInformation(
-                "User {FirebaseUid} joining existing company '{CompanyName}' (ID: {CompanyId})",
+                "User {FirebaseUid} joining existing company '{CompanyName}' (ID: {CompanyId}) - pending approval",
                 firebaseUid,
                 existingCompany.Name,
                 companyId
@@ -315,6 +328,9 @@ public class AuthController : ControllerBase
             // This shouldn't happen due to DTO validation, but handle it anyway
             return BadRequest(new { message = "Either CompanyId or CompanyName must be provided." });
         }
+
+        // Determine if user needs approval (employees joining existing company need approval)
+        var isApproved = !string.IsNullOrWhiteSpace(registerDto.CompanyName); // Creating company = auto-approved
 
         // Create the user
         var user = new User
@@ -327,6 +343,8 @@ public class AuthController : ControllerBase
             CompanyId = companyId,
             Role = role,
             CreatedAt = DateTime.UtcNow,
+            IsApproved = isApproved,
+            ApprovedAt = isApproved ? DateTime.UtcNow : null,
         };
 
         try
@@ -354,6 +372,7 @@ public class AuthController : ControllerBase
                     CompanyId = createdUser.CompanyId,
                     CompanyName = createdUser.Company?.Name,
                     FirebaseUid = createdUser.FirebaseId,
+                    IsApproved = createdUser.IsApproved,
                 }
             );
         }

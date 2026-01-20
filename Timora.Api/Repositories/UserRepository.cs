@@ -135,5 +135,45 @@ namespace Timora.Api.Repositories
                 .Users.Include(u => u.Company)
                 .FirstAsync(u => u.Id == id);
         }
+
+        /// <summary>
+        /// Approves a user's registration request.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user to approve.</param>
+        /// <param name="approverId">The unique identifier of the employer approving the user.</param>
+        /// <returns>The approved user if found; otherwise, null.</returns>
+        public async Task<User?> ApproveUserAsync(int userId, int approverId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return null;
+            }
+
+            user.IsApproved = true;
+            user.ApprovedBy = approverId;
+            user.ApprovedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            return await _context
+                .Users.Include(u => u.Company)
+                .FirstAsync(u => u.Id == userId);
+        }
+
+        /// <summary>
+        /// Retrieves all users pending approval for a specific company.
+        /// </summary>
+        /// <param name="companyId">The unique identifier of the company.</param>
+        /// <returns>A collection of users pending approval.</returns>
+        public async Task<IEnumerable<User>> GetPendingUsersAsync(int companyId)
+        {
+            return await _context
+                .Users.Include(u => u.Company)
+                .Where(u => u.CompanyId == companyId && !u.IsApproved)
+                .OrderBy(u => u.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

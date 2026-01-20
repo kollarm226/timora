@@ -132,11 +132,37 @@ public class AuthControllerTests
         };
 
         _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
-            .ReturnsAsync(new User { Id = 2, FirebaseId = "uid-1", CompanyId = 0, Email = "test@example.com", UserName = "u" });
+            .ReturnsAsync(new User { Id = 2, FirebaseId = "uid-1", CompanyId = 0, Email = "test@example.com", UserName = "u", IsApproved = true });
 
         var response = await _controller.Login(new LoginDto { Username = "u", Password = "p" });
 
         Assert.IsType<BadRequestObjectResult>(response);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsForbidden_WhenUserNotApproved()
+    {
+        var userClaims = BuildUser(firebaseUid: "uid-1");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = userClaims }
+        };
+
+        _mockUserService.Setup(us => us.GetUserByFirebaseIdAsync("uid-1"))
+            .ReturnsAsync(new User 
+            { 
+                Id = 2, 
+                FirebaseId = "uid-1", 
+                CompanyId = 5, 
+                Email = "pending@example.com", 
+                UserName = "pending",
+                IsApproved = false 
+            });
+
+        var response = await _controller.Login(new LoginDto { Username = "pending", Password = "p" });
+
+        var result = Assert.IsType<ObjectResult>(response);
+        Assert.Equal(StatusCodes.Status403Forbidden, result.StatusCode);
     }
 
     [Fact]
@@ -159,7 +185,8 @@ public class AuthControllerTests
                 FirstName = "Ok",
                 LastName = "User",
                 Role = UserRole.Employee,
-                Company = new Company { Id = 7, Name = "Comp" }
+                Company = new Company { Id = 7, Name = "Comp" },
+                IsApproved = true
             });
 
         var response = await _controller.Login(new LoginDto { Username = "ok", Password = "p" });

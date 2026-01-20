@@ -54,9 +54,32 @@ namespace Timora.Data.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
+        /// Gets or sets whether the user has been approved by an employer.
+        /// Defaults to true for existing users and employers creating companies.
+        /// Set to false for employees joining an existing company.
+        /// </summary>
+        public bool IsApproved { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the ID of the employer who approved this user.
+        /// Null if not yet approved or if auto-approved (e.g., company creator).
+        /// </summary>
+        public int? ApprovedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the user was approved. Null if pending approval.
+        /// </summary>
+        public DateTime? ApprovedAt { get; set; }
+
+        /// <summary>
         /// Gets or sets the company this user belongs to.
         /// </summary>
         public Company? Company { get; set; }
+
+        /// <summary>
+        /// Gets or sets the employer who approved this user.
+        /// </summary>
+        public User? ApprovedByUser { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of holiday requests submitted by this user.
