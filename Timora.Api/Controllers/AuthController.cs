@@ -58,6 +58,8 @@ public class AuthController : ControllerBase
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
         var companyId = User.FindFirst("CompanyId")?.Value;
         var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
+        var isApproved = User.FindFirst("IsApproved")?.Value;
+        bool.TryParse(isApprovedString, out var isApproved);
 
         _logger.LogInformation(
             "User accessed /api/auth/me endpoint. UserId={UserId}, Email={Email}, FirebaseUid={FirebaseUid}",
@@ -124,6 +126,7 @@ public class AuthController : ControllerBase
                     email ?? "MISSING"
                 );
             }
+            return NotFound(new { message = "User not found" });
         }
 
         return Ok(
