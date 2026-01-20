@@ -22,5 +22,17 @@ namespace Timora.Api.Services
             DateTime startDate,
             DateTime endDate,
             string? resolverComment);
+
+        /// <summary>
+        /// Sends a user approval notification email.
+        /// </summary>
+        /// <param name="toEmail">The recipient's email address.</param>
+        /// <param name="userName">The name of the approved user.</param>
+        /// <param name="companyName">The name of the company.</param>
+        /// <returns>True if the email was sent successfully; otherwise, false.</returns>
+        Task<bool> SendUserApprovalEmailAsync(
+            string toEmail,
+            string userName,
+            string companyName);
     }
 }

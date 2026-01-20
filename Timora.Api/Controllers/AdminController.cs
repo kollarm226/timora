@@ -18,19 +18,23 @@ public class AdminController : ControllerBase
 {
     private readonly ILogger<AdminController> _logger;
     private readonly IUserService _userService;
+    private readonly IEmailService _emailService;
 
     /// <summary>
     /// Initializes a new instance of the AdminController.
     /// </summary>
     /// <param name="logger">Logger for diagnostic information.</param>
     /// <param name="userService">The user service.</param>
+    /// <param name="emailService">The email service.</param>
     public AdminController(
         ILogger<AdminController> logger,
-        IUserService userService
+        IUserService userService,
+        IEmailService emailService
     )
     {
         _logger = logger;
         _userService = userService;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -145,6 +149,14 @@ public class AdminController : ControllerBase
             currentUser.Id,
             approvedUser.Id,
             approvedUser.Email
+        );
+
+        // Send approval notification email
+        var companyName = approvedUser.Company?.Name ?? "your company";
+        await _emailService.SendUserApprovalEmailAsync(
+            approvedUser.Email,
+            approvedUser.FullName,
+            companyName
         );
 
         return Ok(new

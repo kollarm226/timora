@@ -16,15 +16,18 @@ public class AdminControllerTests
 {
     private readonly Mock<ILogger<AdminController>> _mockLogger;
     private readonly Mock<IUserService> _mockUserService;
+    private readonly Mock<IEmailService> _mockEmailService;
     private readonly AdminController _controller;
 
     public AdminControllerTests()
     {
         _mockLogger = new Mock<ILogger<AdminController>>();
         _mockUserService = new Mock<IUserService>();
+        _mockEmailService = new Mock<IEmailService>();
         _controller = new AdminController(
             _mockLogger.Object,
-            _mockUserService.Object
+            _mockUserService.Object,
+            _mockEmailService.Object
         );
     }
 
